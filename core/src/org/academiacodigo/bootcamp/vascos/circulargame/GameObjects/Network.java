@@ -114,9 +114,8 @@ public class Network {
                 do {
 
                     listeningSocket.receive(imSomeone);
-                    System.out.println("connected");
-                } while (!(imSomeone.getAddress().equals(listeningSocket.getLocalAddress())
-                        && imSomeone.getPort() == listeningSocket.getLocalPort()));
+                    System.out.println(imSomeone.getAddress() + " " + listeningSocket +" " + imSomeone.getPort() +" " +hostPort);
+                } while (imSomeone.getPort() == hostPort);
 
                 //Packet received
                 System.out.println("l received from: " + imSomeone.getAddress().getHostAddress() + " " + imSomeone.getPort());
