@@ -5,18 +5,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
-import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
-import com.badlogic.gdx.utils.Array;
 import org.academiacodigo.bootcamp.vascos.circulargame.GameObjects.CircularMap;
-import org.academiacodigo.bootcamp.vascos.circulargame.GameObjects.Network;
+import org.academiacodigo.bootcamp.vascos.circulargame.GameObjects.TcpConnection;
 
 public class circularGame extends ApplicationAdapter {
     private final float WIDTH_PX = 800;
@@ -28,7 +21,7 @@ public class circularGame extends ApplicationAdapter {
     private final float MAX_VELOCITY = 1;
 
 
-    private Network connection;
+    private TcpConnection connection;
 
     private OrthographicCamera camera;
     private World world;
@@ -43,7 +36,14 @@ public class circularGame extends ApplicationAdapter {
     @Override
     public void create() {
 
-        connection = new Network();
+        connection = new TcpConnection(55555);
+
+        connection.send("TESTE");
+        connection.send("TESTE2");
+
+        System.out.println("RECEBIDO " + connection.receive());
+        System.out.println("RECEBIDO " + connection.receive());
+
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, WIDTH, HEIGHT);
