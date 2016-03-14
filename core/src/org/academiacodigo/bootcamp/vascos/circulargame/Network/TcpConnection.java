@@ -49,7 +49,7 @@ public class TcpConnection {
             bufferedWriter.newLine();
             bufferedWriter.flush();
 
-            //  System.out.println("S " + msg);
+            System.out.println("S " + msg);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -62,7 +62,7 @@ public class TcpConnection {
         try {
             msg = bufferedReader.readLine();
 
-            // System.out.println("R " + msg);
+            System.out.println("R " + msg);
 
         } catch (IOException e) {
             e.printStackTrace();

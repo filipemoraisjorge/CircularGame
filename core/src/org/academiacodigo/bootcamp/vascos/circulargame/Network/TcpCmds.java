@@ -5,7 +5,8 @@ package org.academiacodigo.bootcamp.vascos.circulargame.Network;
  */
 public enum TcpCmds {
     YOUR_TURN,
-    MY_VELOCITY;
+    MY_VELOCITY,
+    MY_TIME;
 
 
     public void send(TcpConnection connection, Object value) {

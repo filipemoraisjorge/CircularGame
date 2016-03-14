@@ -52,7 +52,7 @@ public class circularGame extends ApplicationAdapter {
         connection = new TcpConnection(55555);
 
         //Create Fonts
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/PlayfairDisplay-Regular.otf"));
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
         FreeTypeFontParameter parameter = new FreeTypeFontParameter();
         parameter.size = 22;
         font22 = generator.generateFont(parameter);
@@ -113,14 +113,37 @@ public class circularGame extends ApplicationAdapter {
 
 
     private synchronized void decideWhoPlaysFirst() {
-        boolean randomB;
-        randomB = Math.random() > 0.5;
-        TcpCmds.YOUR_TURN.send(connection, !randomB);
-        playerTurn = randomB;
+
+        //the quickest to get where starts.
+        long myTime = sendTimeToOther();
+        long otherTime = 0;
+        while (otherTime == 0) {
+            otherTime = receiveTimeFromOther();
+        }
+        System.out.println("MINE  " + myTime);
+        System.out.println("OTHER " + otherTime);
+
+        if (myTime > otherTime) {
+            playerTurn = true;
+            TcpCmds.YOUR_TURN.send(connection, !playerTurn);
+        }
         //If is it my turn, save currentTime
         if (playerTurn) {
             lastPlayerTime = TimeUtils.millis();
         }
+    }
+
+    private synchronized long sendTimeToOther() {
+        //send time to other
+        long myTime = TimeUtils.millis();
+        TcpCmds.MY_TIME.send(connection, myTime);
+        return myTime;
+
+    }
+
+    private synchronized long receiveTimeFromOther() {
+        //receive other time (will be stored lastPlayerTime)
+        return lastPlayerTime;
     }
 
 
@@ -173,6 +196,8 @@ public class circularGame extends ApplicationAdapter {
                         lastPlayerTime = TimeUtils.millis();
                     }
                     break;
+                case MY_TIME:
+                    lastPlayerTime = Long.parseLong(msg[1]);
                 case MY_VELOCITY:
                     break;
 
