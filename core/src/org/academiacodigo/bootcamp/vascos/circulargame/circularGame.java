@@ -80,6 +80,8 @@ public class circularGame extends ApplicationAdapter {
         //DECIDE WHO PLAYS FIRST
         decideWhoPlaysFirst();
 
+        mainCircle.setAngularVelocity(0);
+
 
     }
 
@@ -107,6 +109,8 @@ public class circularGame extends ApplicationAdapter {
         controlMainCircle();
 
         //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
+
+
         checkPlayerTurn();
 
     }
@@ -152,14 +156,19 @@ public class circularGame extends ApplicationAdapter {
 
             float vel = mainCircle.getAngularVelocity();
 
+
             // apply left impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -MAX_VELOCITY) {
-                mainCircle.setAngularVelocity(vel - MAX_VELOCITY / 10);
+                float newVel = vel - MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
             // apply right impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < MAX_VELOCITY) {
-                mainCircle.setAngularVelocity(vel + MAX_VELOCITY / 10);
+                float newVel = vel + MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
         }
@@ -169,6 +178,8 @@ public class circularGame extends ApplicationAdapter {
     private synchronized void checkPlayerTurn() {
         if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
             playerTurn = false;
+
+
             TcpCmds.YOUR_TURN.send(connection, true);
         }
     }
@@ -188,17 +199,28 @@ public class circularGame extends ApplicationAdapter {
             String[] msg = connection.receive().split(" ");
 
             TcpCmds thisCmds = TcpCmds.valueOf(msg[0]);
-
+            String value = msg[1];
             switch (thisCmds) {
                 case YOUR_TURN:
-                    playerTurn = Boolean.parseBoolean(msg[1]);
+                    playerTurn = Boolean.parseBoolean(value);
                     if (playerTurn) {
                         lastPlayerTime = TimeUtils.millis();
                     }
                     break;
                 case MY_TIME:
-                    lastPlayerTime = Long.parseLong(msg[1]);
+                    lastPlayerTime = Long.parseLong(value);
                 case MY_VELOCITY:
+                    float vel = mainCircle.getAngularVelocity();
+                    System.out.println("vel " + vel);
+                    if (vel <= -MAX_VELOCITY) {
+                        vel = -MAX_VELOCITY;
+                    }
+                    if (vel >= MAX_VELOCITY) {
+                        vel = MAX_VELOCITY;
+                    }
+
+                    float calcVelocity = vel + Float.parseFloat(value);
+                    mainCircle.setAngularVelocity(calcVelocity);
                     break;
 
                 default:
@@ -271,6 +293,7 @@ public class circularGame extends ApplicationAdapter {
         groundBodyDef.type = BodyDef.BodyType.KinematicBody;
         // Set its world position
         groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
+        groundBodyDef.angularVelocity = 0;
 
         // Create a body from the defintion and add it to the world
         mainCircle = world.createBody(groundBodyDef);
@@ -281,7 +304,7 @@ public class circularGame extends ApplicationAdapter {
         //Calculate the vertices of a circle.
         double radius = 20;
         int numberOfSegments = 20;
-        Vector2[] vertices = new Vector2[numberOfSegments];
+        Vector2[] vertices = new Vector2[numberOfSegments + 1];
 
         double angleSeg = 360 / numberOfSegments;
         for (int i = 0; i < numberOfSegments; i++) {
@@ -290,6 +313,8 @@ public class circularGame extends ApplicationAdapter {
             float y = (float) (radius * Math.sin(angle));
             vertices[i] = new Vector2(x, y);
         }
+        //in the end make a edge till center
+        vertices[numberOfSegments] = new Vector2(0, 0);
 
         groundBox.createLoop(vertices);
         // Create a fixture from our polygon shape and add it to our ground body
