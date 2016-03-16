@@ -231,6 +231,7 @@ public class circularGame extends ApplicationAdapter {
     }
 
     private void createBox2dObjects() {
+
         //A BALL
         // First we create a body definition
         BodyDef bodyDef = new BodyDef();
@@ -268,7 +269,6 @@ public class circularGame extends ApplicationAdapter {
         Body rectBody = world.createBody(rectBodydef);
         PolygonShape rect = new PolygonShape();
 
-        // Set the polygon shape as a box which is twice the size of our view port and 20 high
         // (setAsBox takes half-width and half-height as arguments)
         rect.setAsBox(2.0f, 2.0f);
 
@@ -295,7 +295,7 @@ public class circularGame extends ApplicationAdapter {
         groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
         groundBodyDef.angularVelocity = 0;
 
-        // Create a body from the defintion and add it to the world
+        // Create a body from the definition and add it to the world
         mainCircle = world.createBody(groundBodyDef);
 
         // Create a polygon shape

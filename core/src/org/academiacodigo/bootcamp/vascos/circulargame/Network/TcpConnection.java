@@ -19,9 +19,7 @@ public class TcpConnection {
     private final String ANSWER =   "CG_LETS_GO";
 
     private int finderPort;
-    private int listenerPort = 49152 + (int) (Math.random() * (65535 - 49152)); //a ephemeral port. The range 49152–65535
     private int broadcastPort;
-
 
     private boolean connected;
 
@@ -195,7 +193,7 @@ public class TcpConnection {
                 }
 
                 if (message.equals(ANSWER)) {
-                    System.out.println("ANWSER routine " + imSomeone.getAddress().getHostAddress() + " " + imSomeone.getPort());
+                    System.out.println("ANSWER routine " + imSomeone.getAddress().getHostAddress() + " " + imSomeone.getPort());
                     //wait the maximum broadcastReplayTime
                    /* try {
                         Thread.sleep(MAX_DELAY_TIME);
