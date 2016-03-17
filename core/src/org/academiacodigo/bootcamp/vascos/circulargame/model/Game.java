@@ -3,9 +3,6 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.BigBall;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.LittleBall;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Observable;
 
 
 /**

@@ -7,7 +7,7 @@ public class Player {
 
     private int score;
     private String name;
-    private boolean turn;
+    private boolean playerTurn;
 
     //control big ball
 }
