@@ -36,10 +36,10 @@ public class circularGame extends ApplicationAdapter {
 
     private BitmapFont font22;
 
-
     private Box2DDebugRenderer debugRenderer;
-    private Body mainCircle;
-
+    private Body bigBall;
+    private Body player1Motor;
+    private Body player2Motor;
 
     private long playerTimeToControl = 500;
     private long lastPlayerTime;
@@ -49,7 +49,7 @@ public class circularGame extends ApplicationAdapter {
     @Override
     public void create() {
         //Create Connection between two players
-        connection = new TcpConnection(55555);
+        // connection = new TcpConnection(55555);
 
         //Create Fonts
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
@@ -69,18 +69,19 @@ public class circularGame extends ApplicationAdapter {
         Box2D.init();
 
         world = new World(new Vector2(0, -10), true);
+        world.setGravity(new Vector2(0, 0));
         debugRenderer = new Box2DDebugRenderer();
         createBox2dObjects();
 
         //START LISTENING FOR COMMANDS
-        Thread commandListener = new Thread(new TCPListener());
+      /*  Thread commandListener = new Thread(new TCPListener());
         commandListener.setName("commandListener");
-        commandListener.start();
+        commandListener.start();*/
 
         //DECIDE WHO PLAYS FIRST
-        decideWhoPlaysFirst();
-
-        mainCircle.setAngularVelocity(0);
+        //decideWhoPlaysFirst();
+        playerTurn = true;
+        bigBall.setAngularVelocity(0);
 
 
     }
@@ -111,7 +112,7 @@ public class circularGame extends ApplicationAdapter {
         //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
 
 
-        checkPlayerTurn();
+        //checkPlayerTurn();
 
     }
 
@@ -154,21 +155,23 @@ public class circularGame extends ApplicationAdapter {
     private synchronized void controlMainCircle() {
         if (playerTurn) {
 
-            float vel = mainCircle.getAngularVelocity();
+
+            float vel = bigBall.getAngularVelocity();
 
 
             // apply left impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -MAX_VELOCITY) {
-                float newVel = vel - MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                TcpCmds.MY_VELOCITY.send(connection, newVel);
+                float newVel = vel - MAX_VELOCITY;
+                player1Motor.setAngularVelocity(newVel);
+                //bigBall.applyForce(new Vector2(0.0f, 1.0f), bigBall.getLocalCenter().add(20, 0), true);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
             // apply right impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < MAX_VELOCITY) {
-                float newVel = vel + MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                TcpCmds.MY_VELOCITY.send(connection, newVel);
+                float newVel = vel + MAX_VELOCITY;
+                player1Motor.setAngularVelocity(newVel);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
         }
@@ -210,7 +213,7 @@ public class circularGame extends ApplicationAdapter {
                 case MY_TIME:
                     lastPlayerTime = Long.parseLong(value);
                 case MY_VELOCITY:
-                    float vel = mainCircle.getAngularVelocity();
+                    float vel = bigBall.getAngularVelocity();
                     System.out.println("vel " + vel);
                     if (vel <= -MAX_VELOCITY) {
                         vel = -MAX_VELOCITY;
@@ -220,7 +223,7 @@ public class circularGame extends ApplicationAdapter {
                     }
 
                     float calcVelocity = vel + Float.parseFloat(value);
-                    mainCircle.setAngularVelocity(calcVelocity);
+                    bigBall.setAngularVelocity(calcVelocity);
                     break;
 
                 default:
@@ -232,79 +235,74 @@ public class circularGame extends ApplicationAdapter {
 
     private void createBox2dObjects() {
 
-        //A BALL
+        // Create a circle shape
+        CircleShape circleMotor = new CircleShape();
+        circleMotor.setRadius(3f);
+
+        // Create a fixture definition to apply our shape to
+        FixtureDef fixtureMotorDef = new FixtureDef();
+        fixtureMotorDef.shape = circleMotor;
+        fixtureMotorDef.density = 0.5f;
+        fixtureMotorDef.friction = 1f;
+        fixtureMotorDef.restitution = 0.0f;
+
+
+        //PLAYER1 MOTOR
         // First we create a body definition
-        BodyDef bodyDef = new BodyDef();
-        // We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
-        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        BodyDef motor1 = new BodyDef();
+        motor1.type = BodyDef.BodyType.KinematicBody;
         // Set our body's starting position in the world
-        bodyDef.position.set(WIDTH / 2, HEIGHT / 2);
+        motor1.position.set((WIDTH / 2) - 23, (HEIGHT / 2));
+
+        Fixture fixtureMotorPlayer1 =
+
+                player1Motor.
+
+
+                        createFixture
+
+
+                                (fixtureMotorDef);
+
 
         // Create our body in the world using our body definition
-        Body body = world.createBody(bodyDef);
-
-        // Create a circle shape and set its radius to 6
-        CircleShape circle = new CircleShape();
-        circle.setRadius(6f);
-
-        // Create a fixture definition to apply our shape to
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = circle;
-        fixtureDef.density = 0.5f;
-        fixtureDef.friction = 0.4f;
-        fixtureDef.restitution = 0.6f; // Make it bounce a little bit
+        player1Motor = world.createBody(motor1);
 
         // Create our fixture and attach it to the body
-        Fixture fixture = body.createFixture(fixtureDef);
 
-        // Remember to dispose of any shapes after you're done with them!
-        // BodyDef and FixtureDef don't need disposing, but shapes do.
-        circle.dispose();
+        //PLAYER2 MOTOR
+        // First we create a body definition
+        BodyDef motor2 = new BodyDef();
+        motor2.type = BodyDef.BodyType.KinematicBody;
+        // Set our body's starting position in the world
+        motor2.position.set((WIDTH / 2) + 23, (HEIGHT / 2));
 
-        //A RECTANGLE
-        BodyDef rectBodydef = new BodyDef();
-        rectBodydef.type = BodyDef.BodyType.DynamicBody;
-        rectBodydef.position.set(WIDTH / 2, HEIGHT / 3);
-
-        Body rectBody = world.createBody(rectBodydef);
-        PolygonShape rect = new PolygonShape();
-
-        // (setAsBox takes half-width and half-height as arguments)
-        rect.setAsBox(2.0f, 2.0f);
-
-        // Create a fixture definition to apply our shape to
-        FixtureDef rectDef = new FixtureDef();
-        rectDef.shape = rect;
-        rectDef.density = 0.5f;
-        rectDef.friction = 0.4f;
-        rectDef.restitution = 0.6f; // Make it bounce a little bit
+        // Create our body in the world using our body definition
+        player2Motor = world.createBody(motor2);
 
         // Create our fixture and attach it to the body
-        Fixture fixtureRect = rectBody.createFixture(rectDef);
+        Fixture fixtureMotorPlayer2 = player2Motor.createFixture(fixtureMotorDef);
 
-        // Clean up after ourselves
-        rect.dispose();
+        circleMotor.dispose();
 
-
-        //GROUND
-
+        //BIG BALL
         // Create our body definition
         BodyDef groundBodyDef = new BodyDef();
-        groundBodyDef.type = BodyDef.BodyType.KinematicBody;
+        groundBodyDef.type = BodyDef.BodyType.DynamicBody;
         // Set its world position
         groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
         groundBodyDef.angularVelocity = 0;
 
         // Create a body from the definition and add it to the world
-        mainCircle = world.createBody(groundBodyDef);
+        bigBall = world.createBody(groundBodyDef);
 
         // Create a polygon shape
         ChainShape groundBox = new ChainShape();
 
         //Calculate the vertices of a circle.
         double radius = 20;
-        int numberOfSegments = 20;
-        Vector2[] vertices = new Vector2[numberOfSegments + 1];
+        int numberOfSegments = 36;
+        Vector2[] vertices = new Vector2[numberOfSegments];
 
         double angleSeg = 360 / numberOfSegments;
         for (int i = 0; i < numberOfSegments; i++) {
@@ -313,12 +311,11 @@ public class circularGame extends ApplicationAdapter {
             float y = (float) (radius * Math.sin(angle));
             vertices[i] = new Vector2(x, y);
         }
-        //in the end make a edge till center
-        vertices[numberOfSegments] = new Vector2(0, 0);
+
 
         groundBox.createLoop(vertices);
         // Create a fixture from our polygon shape and add it to our ground body
-        mainCircle.createFixture(groundBox, 0.0f);
+        bigBall.createFixture(groundBox, 0.0f);
         // Clean up after ourselves
         groundBox.dispose();
     }
