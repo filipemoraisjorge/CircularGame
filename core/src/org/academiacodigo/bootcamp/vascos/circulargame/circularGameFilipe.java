@@ -8,16 +8,15 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.math.Vector2;
-
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.TimeUtils;
 import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpCmds;
 import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpConnection;
 
-public class circularGame extends ApplicationAdapter {
+public class circularGameFilipe extends ApplicationAdapter {
     private final float WIDTH_PX = 800;
     private final float HEIGHT_PX = 480;
 
@@ -36,10 +35,10 @@ public class circularGame extends ApplicationAdapter {
 
     private BitmapFont font22;
 
-
     private Box2DDebugRenderer debugRenderer;
-    private Body mainCircle;
-
+    private Body bigBall;
+    private Body player1Motor;
+    private Body player2Motor;
 
     private long playerTimeToControl = 500;
     private long lastPlayerTime;
@@ -49,7 +48,8 @@ public class circularGame extends ApplicationAdapter {
     @Override
     public void create() {
         //Create Connection between two players
-        //connection = new TcpConnection(55555);
+        // connection = new TcpConnection(55555);
+
 
         //Create Fonts
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
@@ -69,19 +69,19 @@ public class circularGame extends ApplicationAdapter {
         Box2D.init();
 
         world = new World(new Vector2(0, -10), true);
+        //world.setGravity(new Vector2(0, 0));
         debugRenderer = new Box2DDebugRenderer();
         createBox2dObjects();
 
         //START LISTENING FOR COMMANDS
- /*       Thread commandListener = new Thread(new TCPListener());
+      /*  Thread commandListener = new Thread(new TCPListener());
         commandListener.setName("commandListener");
         commandListener.start();*/
 
         //DECIDE WHO PLAYS FIRST
         //decideWhoPlaysFirst();
-
-        mainCircle.setAngularVelocity(0);
         playerTurn = true;
+        bigBall.setAngularVelocity(0);
 
 
     }
@@ -117,7 +117,7 @@ public class circularGame extends ApplicationAdapter {
     }
 
 
-/*    private synchronized void decideWhoPlaysFirst() {
+    private synchronized void decideWhoPlaysFirst() {
 
         //the quickest to get where starts.
         long myTime = sendTimeToOther();
@@ -136,7 +136,7 @@ public class circularGame extends ApplicationAdapter {
         if (playerTurn) {
             lastPlayerTime = TimeUtils.millis();
         }
-    }*/
+    }
 
     private synchronized long sendTimeToOther() {
         //send time to other
@@ -155,44 +155,50 @@ public class circularGame extends ApplicationAdapter {
     private synchronized void controlMainCircle() {
         if (playerTurn) {
 
-            float vel = mainCircle.getAngularVelocity();
 
+            float vel = bigBall.getAngularVelocity();
 
-            // apply left impulse, but only if max velocity is not reached yet
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -MAX_VELOCITY) {
-                float newVel = vel - MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
-            }
-
-            // apply right impulse, but only if max velocity is not reached yet
-            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < MAX_VELOCITY) {
-                float newVel = vel + MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
-            }
-
-/*
+            //Player1
             // apply left impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.A) && vel > -MAX_VELOCITY) {
-                float newVel = vel - MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                moveLeft(player1Motor, vel);
             }
 
             // apply right impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.D) && vel < MAX_VELOCITY) {
-                float newVel = vel + MAX_VELOCITY / 10;
-                mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                moveRight(player1Motor, vel);
             }
-            */
+
+            //Player2
+            // apply left impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -MAX_VELOCITY) {
+                moveLeft(player2Motor, vel);
+            }
+
+            // apply right impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < MAX_VELOCITY) {
+                moveRight(player2Motor, vel);
+            }
+
 
         }
     }
 
+    private void moveLeft(Body player, float vel) {
+        float newVel = vel - MAX_VELOCITY;
+        player.setAngularVelocity(newVel);
+        //bigBall.applyForce(new Vector2(0.0f, 1.0f), bigBall.getLocalCenter().add(20, 0), true);
+        //TcpCmds.MY_VELOCITY.send(connection, newVel);
+    }
 
-/*    private synchronized void checkPlayerTurn() {
+    private void moveRight(Body player, float vel) {
+        float newVel = vel + MAX_VELOCITY;
+        player.setAngularVelocity(newVel);
+        //TcpCmds.MY_VELOCITY.send(connection, newVel);
+    }
+
+
+    private synchronized void checkPlayerTurn() {
         if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
             playerTurn = false;
 
@@ -201,6 +207,102 @@ public class circularGame extends ApplicationAdapter {
         }
     }
 
+    private void createBox2dObjects() {
+
+        //BIG BALL
+        // Create our body definition
+        BodyDef bigCircleBodyDef = new BodyDef();
+        bigCircleBodyDef.type = BodyDef.BodyType.DynamicBody;
+        // Set its world position
+        bigCircleBodyDef.position.set(WIDTH / 2, HEIGHT / 2);
+        bigCircleBodyDef.angularVelocity = 0;
+        // Create a body from the definition and add it to the world
+        bigBall = world.createBody(bigCircleBodyDef);
+
+        // Create a polygon shape
+        ChainShape bigCircleChain = new ChainShape();
+        //Calculate the vertices of a circle.
+        double radius = 20;
+        int numberOfSegments = 36;
+        Vector2[] vertices = new Vector2[numberOfSegments + 2];
+
+        double angleSeg = 360 / numberOfSegments;
+        for (int i = 0; i < numberOfSegments + 1; i++) {
+            double angle = Math.toRadians(angleSeg * i);
+            float x = (float) (radius * Math.cos(angle));
+            float y = (float) (radius * Math.sin(angle));
+            vertices[i] = new Vector2(x, y);
+        }
+        vertices[numberOfSegments + 1] = new Vector2(0, 0);
+
+        bigCircleChain.createLoop(vertices);
+
+        // Create FixtureDef
+        FixtureDef bigCircleFixtureDef = new FixtureDef();
+        bigCircleFixtureDef.shape = bigCircleChain;
+        bigCircleFixtureDef.density = 0.00001f;
+        bigCircleFixtureDef.friction = 1f;
+        bigCircleFixtureDef.restitution = 0.0f;
+        // Create a fixture from our polygon shape and add it to our ground body
+        bigBall.createFixture(bigCircleFixtureDef);
+
+
+        //The Motors
+        // Create a circle shape
+        CircleShape motorCircleShape = new CircleShape();
+        motorCircleShape.setRadius(3f);
+
+        // Create a fixture definition to apply our shape to
+        FixtureDef motorFixtureDef = new FixtureDef();
+        motorFixtureDef.shape = motorCircleShape;
+        motorFixtureDef.density = 0.5f;
+        motorFixtureDef.friction = 1f;
+        motorFixtureDef.restitution = 0.0f;
+
+
+        //PLAYER1 MOTOR
+        // First we create a body definition
+        BodyDef motor1 = new BodyDef();
+        motor1.type = BodyDef.BodyType.KinematicBody;
+
+        float radiusM = 20 + motorCircleShape.getRadius();
+        float xM = (float) (radiusM * Math.cos(Math.toRadians(30)));
+        float yM = (float) (radiusM * Math.sin(Math.toRadians(30)));
+        // Set our body's starting position in the world
+        motor1.position.set((WIDTH / 2) - xM, (HEIGHT / 2) - yM);
+        // Create our body in the world using our body definition
+        player1Motor = world.createBody(motor1);
+        // Create our fixture and attach it to the body
+        Fixture player1MotorFixture = player1Motor.createFixture(motorFixtureDef);
+
+
+        //PLAYER2 MOTOR
+        // First we create a body definition
+        BodyDef motor2 = new BodyDef();
+        motor2.type = BodyDef.BodyType.KinematicBody;
+        // Set our body's starting position in the world
+        motor2.position.set((WIDTH / 2) + xM, (HEIGHT / 2) - yM);
+        // Create our body in the world using our body definition
+        player2Motor = world.createBody(motor2);
+        // Create our fixture and attach it to the body
+        player2Motor.createFixture(motorFixtureDef);
+
+        //a test square
+        BodyDef squareBodyDef = new BodyDef();
+        squareBodyDef.type = BodyDef.BodyType.DynamicBody;
+        squareBodyDef.position.set(WIDTH / 2 + 23, HEIGHT / 2 + 1);
+        Body square = world.createBody(squareBodyDef);
+        PolygonShape squareShape = new PolygonShape();
+        squareShape.setAsBox(1, 1);
+        square.createFixture(squareShape, 0.5f);
+
+        // Clean up after ourselves
+          bigCircleChain.dispose();
+          motorCircleShape.dispose();
+          squareShape.dispose();
+
+
+    }
 
     private class TCPListener implements Runnable {
         @Override
@@ -209,9 +311,9 @@ public class circularGame extends ApplicationAdapter {
                 receiveCommand(connection);
             }
 
-        }*/
+        }
 
-/*        private void receiveCommand(TcpConnection connection) {
+        private void receiveCommand(TcpConnection connection) {
 
             String[] msg = connection.receive().split(" ");
 
@@ -227,7 +329,7 @@ public class circularGame extends ApplicationAdapter {
                 case MY_TIME:
                     lastPlayerTime = Long.parseLong(value);
                 case MY_VELOCITY:
-                    float vel = mainCircle.getAngularVelocity();
+                    float vel = bigBall.getAngularVelocity();
                     System.out.println("vel " + vel);
                     if (vel <= -MAX_VELOCITY) {
                         vel = -MAX_VELOCITY;
@@ -237,109 +339,17 @@ public class circularGame extends ApplicationAdapter {
                     }
 
                     float calcVelocity = vel + Float.parseFloat(value);
-                    mainCircle.setAngularVelocity(calcVelocity);
+                    bigBall.setAngularVelocity(calcVelocity);
                     break;
 
                 default:
                     //nothing
             }
 
-        }*/
-
-
-    private void createBox2dObjects() {
-
-        //A BALL
-        // First we create a body definition
-        BodyDef bodyDef = new BodyDef();
-        // We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
-        bodyDef.type = BodyDef.BodyType.DynamicBody;
-        // Set our body's starting position in the world
-        bodyDef.position.set(WIDTH / 2, HEIGHT / 2);
-
-        // Create our body in the world using our body definition
-        Body body = world.createBody(bodyDef);
-
-        // Create a circle shape and set its radius to 6
-        CircleShape circle = new CircleShape();
-        circle.setRadius(6f);
-
-        // Create a fixture definition to apply our shape to
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = circle;
-        fixtureDef.density = 0.5f;
-        fixtureDef.friction = 0.4f;
-        fixtureDef.restitution = 0.6f; // Make it bounce a little bit
-
-        // Create our fixture and attach it to the body
-        Fixture fixture = body.createFixture(fixtureDef);
-
-        // Remember to dispose of any shapes after you're done with them!
-        // BodyDef and FixtureDef don't need disposing, but shapes do.
-        circle.dispose();
-
-        //A RECTANGLE
-        BodyDef rectBodydef = new BodyDef();
-        rectBodydef.type = BodyDef.BodyType.DynamicBody;
-        rectBodydef.position.set(WIDTH / 2, HEIGHT / 3);
-
-        Body rectBody = world.createBody(rectBodydef);
-        PolygonShape rect = new PolygonShape();
-
-        // (setAsBox takes half-width and half-height as arguments)
-        rect.setAsBox(2.0f, 2.0f);
-
-        // Create a fixture definition to apply our shape to
-        FixtureDef rectDef = new FixtureDef();
-        rectDef.shape = rect;
-        rectDef.density = 0.5f;
-        rectDef.friction = 0.4f;
-        rectDef.restitution = 0.6f; // Make it bounce a little bit
-
-        // Create our fixture and attach it to the body
-        Fixture fixtureRect = rectBody.createFixture(rectDef);
-
-        // Clean up after ourselves
-        rect.dispose();
-
-
-        //GROUND
-
-        // Create our body definition
-        BodyDef groundBodyDef = new BodyDef();
-        groundBodyDef.type = BodyDef.BodyType.KinematicBody;
-        // Set its world position
-        groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
-        groundBodyDef.angularVelocity = 0;
-
-        // Create a body from the definition and add it to the world
-        mainCircle = world.createBody(groundBodyDef);
-
-        // Create a polygon shape
-        ChainShape groundBox = new ChainShape();
-
-        //Calculate the vertices of a circle.
-        double radius = 20;
-        int numberOfSegments = 36;
-        Vector2[] vertices = new Vector2[numberOfSegments + 2];
-
-        double angleSeg = 360 / numberOfSegments;
-        for (int i = 0; i < numberOfSegments+1; i++) {
-            double angle = Math.toRadians(angleSeg * i);
-            float x = (float) (radius * Math.cos(angle));
-            float y = (float) (radius * Math.sin(angle));
-            vertices[i] = new Vector2(x, y);
         }
-        //in the end make a edge till center
-        vertices[numberOfSegments + 1] = new Vector2(0, 0);
-
-        groundBox.createLoop(vertices);
-        // Create a fixture from our polygon shape and add it to our ground body
-        mainCircle.createFixture(groundBox, 0.0f);
-        // Clean up after ourselves
-        groundBox.dispose();
     }
 
 
 }
+
 
