@@ -5,25 +5,25 @@ import org.academiacodigo.bootcamp.vascos.circulargame.model.RandomGenerator;
 /**
  * Created by JVasconcelos on 16/03/16
  */
-public class LittleBallFactory {
+public class LilBallFactory {
 
-    public LittleBall getNewLittleBall() {
+    public static LilBall getNewLittleBall() {
         int random = RandomGenerator.generateRandomly(2);
-        LittleBall littleBall = new LittleBall();
+        LilBall lilBall = new LilBall();
 
         switch (random) {
 
             case 0:
-                littleBall.setType(LittleBallType.A);
+                lilBall.setType(LilBallType.A);
                 break;
             case 1:
-                littleBall.setType(LittleBallType.B);
+                lilBall.setType(LilBallType.B);
                 break;
             case 2:
-                littleBall.setType(LittleBallType.C);
+                lilBall.setType(LilBallType.C);
                 break;
         }
 
-        return littleBall;
+        return lilBall;
     }
 }
