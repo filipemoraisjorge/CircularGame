@@ -1,7 +1,6 @@
 package org.academiacodigo.bootcamp.vascos.circulargame.view;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 /**
  * Created by JVasconcelos on 18/03/16
  */
-public class View extends ApplicationAdapter {
+public class View implements ApplicationListener {
     private final float WIDTH_PX = 800;
     private final float HEIGHT_PX = 480;
 
@@ -39,6 +38,7 @@ public class View extends ApplicationAdapter {
     private Box2DDebugRenderer debugRenderer;
     private Body mainCircle;
 
+    private boolean playerTurn;
 
 
     private int gameObjectId = 1;
@@ -48,6 +48,45 @@ public class View extends ApplicationAdapter {
     public ArrayList<Body> getGameObjects() {
         return gameObjects;
     }
+    private Screen screen;
+
+    @Override
+    public void dispose () {
+        if (screen != null) screen.hide();
+    }
+
+    @Override
+    public void pause () {
+        if (screen != null) screen.pause();
+    }
+
+    @Override
+    public void resume () {
+        if (screen != null) screen.resume();
+    }
+
+
+    @Override
+    public void resize (int width, int height) {
+        if (screen != null) screen.resize(width, height);
+    }
+    /** Sets the current screen. {@link Screen#hide()} is called on any old screen, and {@link Screen#show()} is called on the new
+     * screen, if any.
+     * @param screen may be {@code null}
+     */
+    public void setScreen (Screen screen) {
+        if (this.screen != null) this.screen.hide();
+        this.screen = screen;
+        if (this.screen != null) {
+            this.screen.show();
+            this.screen.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        }
+    }
+
+    /** @return the currently active {@link Screen}. */
+    public Screen getScreen () {
+        return screen;
+    }
 
     @Override
     public void create() {
@@ -55,19 +94,18 @@ public class View extends ApplicationAdapter {
         //connection = new TcpConnection(55555);
 
         //Create Fonts
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
+    /*    FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = 22;
         font22 = generator.generateFont(parameter);
-        generator.dispose();
-
+        generator.dispose();*/
 
         cameraBox2d = new OrthographicCamera();
         cameraBox2d.setToOrtho(false, WIDTH, HEIGHT);
 
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);
-        batch = new SpriteBatch();
+/*        camera = new OrthographicCamera();
+        camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);*/
+       /* batch = new SpriteBatch();*/
 
         Box2D.init();
 
@@ -84,38 +122,40 @@ public class View extends ApplicationAdapter {
         //DECIDE WHO PLAYS FIRST
         //decideWhoPlaysFirst();
 
-        mainCircle.setAngularVelocity(0);
-        //playerTurn = true;
-        //setPlayerTurn(true);
 
+        playerTurn = true;
+        //setPlayerTurn(true);
+createBigBall();
+        createLilBall();
     }
 
 
     @Override
     public void render() {
+        if (screen != null) screen.render(Gdx.graphics.getDeltaTime());
+
         //clear screen
         Gdx.gl.glClearColor(0.0f, 0.1f, 0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         //update cameras
         cameraBox2d.update();
-        camera.update();
+        //camera.update();
 
         //render box2D world
         debugRenderer.render(world, cameraBox2d.combined);
         world.step(1 / 60f, 6, 2);
 
         //my turn info for debugging
-        batch.setProjectionMatrix(camera.combined);
+/*        batch.setProjectionMatrix(camera.combined);
         batch.begin();
         font22.setColor((playerTurn ? Color.GREEN : Color.RED));
         font22.draw(batch, "my turn", 50, 50);
-        batch.end();
+        batch.end();*/
 
         controlMainCircle();
 
         //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
-
-
         //checkPlayerTurn();
 
     }
@@ -128,6 +168,47 @@ public class View extends ApplicationAdapter {
 
         createLilBall();
     }
+
+    private synchronized void controlMainCircle() {
+        if (playerTurn) {
+
+            float vel = mainCircle.getAngularVelocity();
+
+
+            // apply left impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -MAX_VELOCITY) {
+                float newVel = vel - MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+            }
+
+            // apply right impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < MAX_VELOCITY) {
+                float newVel = vel + MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+            }
+
+/*
+            // apply left impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.A) && vel > -MAX_VELOCITY) {
+                float newVel = vel - MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+            }
+
+            // apply right impulse, but only if max velocity is not reached yet
+            if (Gdx.input.isKeyPressed(Input.Keys.D) && vel < MAX_VELOCITY) {
+                float newVel = vel + MAX_VELOCITY / 10;
+                mainCircle.setAngularVelocity(newVel);
+                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+            }
+            */
+
+        }
+    }
+
+
 
     private void createBigBall() {
 
@@ -181,7 +262,7 @@ public class View extends ApplicationAdapter {
 
         // Create a circle shape and set its radius to 6
         CircleShape circle = new CircleShape();
-        circle.setRadius(6f);
+        circle.setRadius(1f);
 
 
         // Create a fixture definition to apply our shape to

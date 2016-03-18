@@ -3,8 +3,8 @@ package org.academiacodigo.bootcamp.vascos.circulargame.controller;
 import com.badlogic.gdx.physics.box2d.Body;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.ModelGame;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.BigBall;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.LilBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
 import org.academiacodigo.bootcamp.vascos.circulargame.view.View;
 
 import java.util.ArrayList;
@@ -16,15 +16,19 @@ public class Controller {
 
     private View view;
     private ModelGame modelGame;
-    private ArrayList<Gluable> gameObjects = modelGame.getGameObjects();
-    private ArrayList<Body> representations = view.getGameObjects();
+    private ArrayList<Gluable> gameObjects;
+    private ArrayList<Body> representations;
+
+
 
     public void setView(View view) {
         this.view = view;
+        representations = view.getGameObjects();
     }
 
     public void setModelGame(ModelGame modelGame) {
         this.modelGame = modelGame;
+        gameObjects = modelGame.getGameObjects();
     }
 
     public void newGameObject() {
@@ -35,6 +39,19 @@ public class Controller {
 
     }
 
+    public Controller() {
+        init();
+    }
+
+    private void init() {
+
+    }
+
+    public void update(float deltaTime) {
+        //update all game objects
+
+
+    }
 
     public void deleteGameObject(int gameObjectId) {
         representations.remove(gameObjectId);
@@ -49,7 +66,7 @@ public class Controller {
 
             if(ball2 instanceof BigBall) {
                 ball1.glue();
-                view.stopGameObject(ball1);
+                //view.stopGameObject(ball1);
                 return;
             }
 
@@ -60,7 +77,7 @@ public class Controller {
         }
 
         ball2.glue();
-        view.stopGameObject(ball2);
+        //view.stopGameObject(ball2);
     }
 
 }

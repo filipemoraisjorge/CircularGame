@@ -1,7 +1,7 @@
-package org.academiacodigo.bootcamp.vascos.circulargame.model;
+package org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects;
 
-import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.LilBall;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.balls.LilBallFactory;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBallFactory;
 
 
 public class Launcher {

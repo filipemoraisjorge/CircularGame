@@ -1,6 +1,5 @@
-package org.academiacodigo.bootcamp.vascos.circulargame.model.balls;
+package org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects;
 
-import com.badlogic.gdx.physics.box2d.*;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Publisher;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.PublisherTopic;

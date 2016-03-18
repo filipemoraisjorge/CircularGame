@@ -1,15 +1,8 @@
-package org.academiacodigo.bootcamp.vascos.circulargame.model.balls;
+package org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects;
 
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.ChainShape;
-import com.badlogic.gdx.physics.box2d.World;
-import com.sun.javaws.Launcher;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.Publisher;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.PublisherTopic;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.Subscriber;
+
+import org.academiacodigo.bootcamp.vascos.circulargame.model.*;
 
 import java.util.ArrayList;
 import java.util.List;

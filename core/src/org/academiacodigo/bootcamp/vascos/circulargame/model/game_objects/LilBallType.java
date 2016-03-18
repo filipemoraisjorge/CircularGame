@@ -1,4 +1,4 @@
-package org.academiacodigo.bootcamp.vascos.circulargame.model.balls;
+package org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects;
 
 /**
  * Created by JVasconcelos on 16/03/16
