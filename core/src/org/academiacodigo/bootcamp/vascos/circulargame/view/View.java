@@ -109,7 +109,7 @@ public class View implements ApplicationListener {
 
         Box2D.init();
 
-        world = new World(new Vector2(0, -10), true);
+        world = new World(new Vector2(0, 0), true);
         debugRenderer = new Box2DDebugRenderer();
 
 
@@ -125,8 +125,6 @@ public class View implements ApplicationListener {
 
         playerTurn = true;
         //setPlayerTurn(true);
-createBigBall();
-        createLilBall();
     }
 
 
@@ -165,7 +163,7 @@ createBigBall();
             createBigBall();
             return;
         }
-
+        //else
         createLilBall();
     }
 
@@ -228,17 +226,17 @@ createBigBall();
         //Calculate the vertices of a circle.
         double radius = 20;
         int numberOfSegments = 36;
-        Vector2[] vertices = new Vector2[numberOfSegments + 2];
+        Vector2[] vertices = new Vector2[numberOfSegments];
 
         double angleSeg = 360 / numberOfSegments;
-        for (int i = 0; i < numberOfSegments+1; i++) {
+        for (int i = 0; i < numberOfSegments; i++) {
             double angle = Math.toRadians(angleSeg * i);
             float x = (float) (radius * Math.cos(angle));
             float y = (float) (radius * Math.sin(angle));
             vertices[i] = new Vector2(x, y);
         }
         //in the end make a edge till center
-        vertices[numberOfSegments + 1] = new Vector2(0, 0);
+        //vertices[numberOfSegments] = new Vector2(0, 0);
 
         groundBox.createLoop(vertices);
         // Create a fixture from our polygon shape and add it to our ground body
@@ -278,6 +276,8 @@ createBigBall();
         // Remember to dispose of any shapes after you're done with them!
         // BodyDef and FixtureDef don't need disposing, but shapes do.
         circle.dispose();
+
+        body.setLinearVelocity(0,-10);
 
     }
 

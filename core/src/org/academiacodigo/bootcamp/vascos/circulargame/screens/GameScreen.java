@@ -30,14 +30,14 @@ public class GameScreen extends AbstractGameScreen {
 
         // Initialize controller and view
         controller = new Controller();
-        view = new View();
-        ModelGame game = new ModelGame();
+        ModelGame game = new ModelGame(controller);
 
+        view = new View();
         controller.setModelGame(game);
         controller.setView(view);
 
         view.create();
-
+        game.init();
 
 
     }

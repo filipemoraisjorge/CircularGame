@@ -1,6 +1,8 @@
 package org.academiacodigo.bootcamp.vascos.circulargame.model;
 
+import org.academiacodigo.bootcamp.vascos.circulargame.controller.Controller;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
 
 import java.util.ArrayList;
 
@@ -8,7 +10,10 @@ import java.util.ArrayList;
 /**
  * Created by JVasconcelos on 16/03/16
  */
-public class ModelGame {
+public class ModelGame implements Publisher{
+
+
+    private Subscriber controller;
 
     private BigBall bigBall;
     private Player player1;
@@ -20,7 +25,18 @@ public class ModelGame {
         return gameObjects;
     }
 
+    public ModelGame(Subscriber controller) {
+        registerSubscriber(controller);
+
+    }
+
     public void init() {
+
+        bigBall = new BigBall(this);
+        publish(GameObjectType.BIGBALL);
+
+
+
         //initialize bigBall and players (and launchers)
     }
 
@@ -29,6 +45,13 @@ public class ModelGame {
     }
 
 
+    @Override
+    public void registerSubscriber(Subscriber subscriber) {
+        this.controller = subscriber;
+    }
 
-
+    @Override
+    public void publish(Enum topic) {
+        controller.update(topic, this);
+    }
 }

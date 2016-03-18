@@ -6,5 +6,6 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
 public enum PublisherTopic {
     STOPPED,
     EXPLODE,
-    BOUNCE
+    BOUNCE,
+
 }

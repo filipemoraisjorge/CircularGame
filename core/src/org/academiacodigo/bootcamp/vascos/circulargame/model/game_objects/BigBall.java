@@ -16,11 +16,22 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
     private Launcher launcher1;
     private Launcher launcher2;
 
+    private ModelGame modelGame;
+
 
     private Body mainCircle;
     private double radius = 20;
     private int id = 0;
 
+    public BigBall(ModelGame modelGame) {
+        this.modelGame = modelGame;
+
+        launcher1 = new Launcher(1, modelGame);
+        launcher2 = new Launcher(2, modelGame);
+        launcher1.spit(1);
+        launcher2.spit(1);
+
+    }
 
     public void rotate(int speed) {
         //receive user input and move accordingly
@@ -36,11 +47,10 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
     }
 
 
-
     @Override
-    public void update(PublisherTopic topic, LilBall object) {
+    public void update(Enum topic, LilBall object) {
 
-        switch (topic) {
+        switch ((PublisherTopic) topic) {
             case STOPPED:
                 //stop balls, set position
                 break;
@@ -54,4 +64,5 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
                 //never going to occur but whatevs
         }
     }
+
 }

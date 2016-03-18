@@ -9,7 +9,7 @@ public class LilBallFactory {
 
     private static int nextId = 1;
 
-    public static LilBall getNewLilBall() {
+    public static LilBall getNewLilBall(int playerId) {
         int random = RandomGenerator.generateRandomly(2);
         LilBall lilBall = new LilBall();
 
@@ -27,6 +27,7 @@ public class LilBallFactory {
         }
 
         lilBall.setId(nextId);
+        lilBall.setPlayerId(playerId);
         nextId++;
 
         return lilBall;

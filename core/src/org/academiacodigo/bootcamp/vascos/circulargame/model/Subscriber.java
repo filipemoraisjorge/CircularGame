@@ -5,5 +5,5 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
  */
 public interface Subscriber<T> {
 
-    void update(PublisherTopic topic, T object);
+    void update(Enum topic, T object);
 }

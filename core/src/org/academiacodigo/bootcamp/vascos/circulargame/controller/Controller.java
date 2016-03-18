@@ -3,7 +3,9 @@ package org.academiacodigo.bootcamp.vascos.circulargame.controller;
 import com.badlogic.gdx.physics.box2d.Body;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.ModelGame;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.Subscriber;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
 import org.academiacodigo.bootcamp.vascos.circulargame.view.View;
 
@@ -12,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Created by JVasconcelos on 16/03/16
  */
-public class Controller {
+public class Controller implements Subscriber{
 
     private View view;
     private ModelGame modelGame;
@@ -80,4 +82,21 @@ public class Controller {
         //view.stopGameObject(ball2);
     }
 
+
+
+    @Override
+    public void update(Enum topic, Object object) {
+
+        switch ((GameObjectType)topic) {
+            case BIGBALL:
+                view.createNewGameObject();
+                break;
+            case LILBALL:
+                view.createNewGameObject();
+                break;
+            default:
+                //whatever
+
+        }
+    }
 }

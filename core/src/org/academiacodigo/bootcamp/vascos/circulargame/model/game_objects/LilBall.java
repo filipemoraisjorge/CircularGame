@@ -38,6 +38,10 @@ public class LilBall implements Gluable, Publisher {
         return id;
     }
 
+    public void setPlayerId(int playerId) {
+        this.playerId = playerId;
+    }
+
     public void explode() {
         //if ball hits attached ball explode this ball
         //explode hit ball and attached ball
@@ -104,10 +108,10 @@ public class LilBall implements Gluable, Publisher {
     }
 
     @Override
-    public void publish(PublisherTopic topic) {
+    public void publish(Enum topic) {
         subscriber.update(topic, this);
-
     }
+
 
 
 }
