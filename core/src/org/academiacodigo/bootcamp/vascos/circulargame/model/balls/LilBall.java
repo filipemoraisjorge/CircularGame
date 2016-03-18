@@ -17,9 +17,9 @@ public class LilBall implements Gluable, Publisher {
     private Subscriber<LilBall> subscriber;
 
     private int playerId;
+    private int id;
     private LilBallType type;
     private boolean attached;
-    private boolean stopped;
     private float radius;
 
     //tem que passar a ser uma lista de gluables
@@ -31,6 +31,14 @@ public class LilBall implements Gluable, Publisher {
         this.type = type;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     public void explode() {
         //if ball hits attached ball explode this ball
         //explode hit ball and attached ball
@@ -40,17 +48,15 @@ public class LilBall implements Gluable, Publisher {
     }
 
     @Override
-    public boolean glue() {
-        stopped = true;
+    public void glue() {
         publish(PublisherTopic.STOPPED);
         //glue to same type balls or to bigBall walls
 
         //notify observers of change (stopped)
-        return false;
     }
 
     public void crash(Gluable otherBall) {
-        //lilball representation touches another ball's representation:
+        //lil ball representation touches another ball's representation:
         if(otherBall instanceof BigBall) {
             glue();
             return;

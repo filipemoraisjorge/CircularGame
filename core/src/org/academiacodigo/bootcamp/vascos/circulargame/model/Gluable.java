@@ -5,5 +5,5 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
  */
 public interface Gluable {
 
-    boolean glue();
+    void glue();
 }

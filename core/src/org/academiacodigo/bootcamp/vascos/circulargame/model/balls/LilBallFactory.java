@@ -7,7 +7,9 @@ import org.academiacodigo.bootcamp.vascos.circulargame.model.RandomGenerator;
  */
 public class LilBallFactory {
 
-    public static LilBall getNewLittleBall() {
+    private static int nextId = 1;
+
+    public static LilBall getNewLilBall() {
         int random = RandomGenerator.generateRandomly(2);
         LilBall lilBall = new LilBall();
 
@@ -24,6 +26,11 @@ public class LilBallFactory {
                 break;
         }
 
+        lilBall.setId(nextId);
+        nextId++;
+
         return lilBall;
     }
+
+
 }
