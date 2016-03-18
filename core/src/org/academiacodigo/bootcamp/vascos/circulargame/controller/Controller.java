@@ -82,6 +82,12 @@ public class Controller implements Subscriber{
         //view.stopGameObject(ball2);
     }
 
+    //representations, not gluables
+    public void touch(Body ball) {
+        for (Body rep: representations) {
+            //collision detector?
+        }
+    }
 
 
     @Override
