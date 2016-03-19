@@ -20,16 +20,15 @@ public class Launcher {
         return nextBallToSpit;
     }
 
-    public LilBall getNewLilBall() {
+    private LilBall getNewLilBall() {
         //get new lilBall
         LilBall lilBall = LilBallFactory.getNewLilBall(playerId);
         //warn model so it can warn controller
-
         modelGame.publish(GameObjectType.LILBALL, lilBall);
         return lilBall;
     }
 
-    public void spit() {
+    public void launch() {
         nextBallToSpit.startMoving();
         nextBallToSpit = getNewLilBall();
     }

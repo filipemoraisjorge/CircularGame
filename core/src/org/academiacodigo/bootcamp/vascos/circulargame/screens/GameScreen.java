@@ -17,6 +17,7 @@ public class GameScreen extends AbstractGameScreen {
 
     private Controller controller;
     private View view;
+    private final boolean MULTIPLAYER = true;
 
     public GameScreen(Game game) {
         super(game);
@@ -37,7 +38,7 @@ public class GameScreen extends AbstractGameScreen {
         controller.setView(view);
 
         view.create();
-        game.init();
+        game.init(MULTIPLAYER);
 
 
     }
