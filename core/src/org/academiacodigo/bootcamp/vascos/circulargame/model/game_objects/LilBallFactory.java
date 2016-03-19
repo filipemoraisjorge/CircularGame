@@ -28,6 +28,8 @@ public class LilBallFactory {
 
         lilBall.setId(nextId);
         lilBall.setPlayerId(playerId);
+        lilBall.setRadius(1f);
+
         nextId++;
 
         return lilBall;

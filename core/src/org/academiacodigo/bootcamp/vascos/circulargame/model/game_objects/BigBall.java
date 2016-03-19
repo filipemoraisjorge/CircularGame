@@ -1,45 +1,49 @@
 package org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects;
 
-import com.badlogic.gdx.physics.box2d.Body;
-
 import org.academiacodigo.bootcamp.vascos.circulargame.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by JVasconcelos on 16/03/16
  */
 public class BigBall implements Gluable, Subscriber<LilBall> {
 
-    private List<Publisher> lilBallList = new ArrayList<Publisher>();
-    private Launcher launcher1;
-    private Launcher launcher2;
+    private Map<Integer, LilBall> lilBallMap;
 
     private ModelGame modelGame;
 
-
-    private Body mainCircle;
-    private double radius = 20;
-    private int id = 0;
+    private double radius;
+    private int id;
 
     public BigBall(ModelGame modelGame) {
         this.modelGame = modelGame;
+        this.lilBallMap = new HashMap<Integer, LilBall>();
+        this.radius = 20;
+        this.id = 0;
+    }
 
-        launcher1 = new Launcher(1, modelGame);
-        launcher2 = new Launcher(2, modelGame);
-        launcher1.spit(1);
-        launcher2.spit(1);
+    public double getRadius() {
+        return radius;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void put(LilBall lilBall) {
+        //subscribe this BigBall to receive publishes from lilBall
+        lilBall.registerSubscriber(this);
+        //add lil ball to map
+        lilBallMap.put(lilBall.getId(), lilBall);
 
     }
 
-    public void rotate(int speed) {
-        //receive user input and move accordingly
+    public void remove(LilBall lilBall) {
+        lilBallMap.remove(lilBall.getId());
     }
 
-    public void add(LilBall lilBall) {
-        //add lil ball to array
-    }
 
     @Override
     public void glue() {
@@ -48,9 +52,12 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
 
 
     @Override
-    public void update(Enum topic, LilBall object) {
+    public void update(Enum topic, LilBall lilBall) {
 
-        switch ((PublisherTopic) topic) {
+        switch ((LilBallTopic) topic) {
+            case START:
+                modelGame.publish(LilBallTopic.START, lilBall);
+                break;
             case STOPPED:
                 //stop balls, set position
                 break;

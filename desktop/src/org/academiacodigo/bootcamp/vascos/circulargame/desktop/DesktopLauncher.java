@@ -2,8 +2,7 @@ package org.academiacodigo.bootcamp.vascos.circulargame.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.Main;
-import org.academiacodigo.bootcamp.vascos.circulargame.view.View;
+import org.academiacodigo.bootcamp.vascos.circulargame.Main;
 
 public class DesktopLauncher {
 	public static void main (String[] arg) {

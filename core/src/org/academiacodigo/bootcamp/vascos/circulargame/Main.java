@@ -1,4 +1,4 @@
-package org.academiacodigo.bootcamp.vascos.circulargame.model;
+package org.academiacodigo.bootcamp.vascos.circulargame;
 
 
 import com.badlogic.gdx.Game;

@@ -7,6 +7,7 @@ import org.academiacodigo.bootcamp.vascos.circulargame.model.Subscriber;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBallTopic;
 import org.academiacodigo.bootcamp.vascos.circulargame.view.View;
 
 import java.util.ArrayList;
@@ -14,28 +15,25 @@ import java.util.ArrayList;
 /**
  * Created by JVasconcelos on 16/03/16
  */
-public class Controller implements Subscriber{
+public class Controller implements Subscriber<Gluable> {
 
     private View view;
     private ModelGame modelGame;
     private ArrayList<Gluable> gameObjects;
-    private ArrayList<Body> representations;
-
 
 
     public void setView(View view) {
         this.view = view;
-        representations = view.getGameObjects();
     }
 
     public void setModelGame(ModelGame modelGame) {
         this.modelGame = modelGame;
-        gameObjects = modelGame.getGameObjects();
+
     }
 
-    public void newGameObject() {
+    public void newGameObject(Gluable ball) {
 
-        view.createNewGameObject();
+        view.createNewGameObject(ball);
         //o newGameObj manda a view criar qq coisa la dentro dela
         //a View é que dps sabe que tem que criar um body e uma fixture e merdas dessas
 
@@ -55,54 +53,45 @@ public class Controller implements Subscriber{
 
     }
 
-    public void deleteGameObject(int gameObjectId) {
-        representations.remove(gameObjectId);
-        gameObjects.remove(gameObjectId);
-    }
-
-
 
     public void touched(Gluable ball1, Gluable ball2) {
-        if(ball1 instanceof LilBall) {
-            ((LilBall)ball1).crash(ball2);
 
-            if(ball2 instanceof BigBall) {
-                ball1.glue();
-                //view.stopGameObject(ball1);
-                return;
-            }
-
-            deleteGameObject(((LilBall) ball1).getId());
-            deleteGameObject(((LilBall) ball2).getId());
-            return;
-
-        }
-
-        ball2.glue();
-        //view.stopGameObject(ball2);
-    }
-
-    //representations, not gluables
-    public void touch(Body ball) {
-        for (Body rep: representations) {
-            //collision detector?
+        if (ball1 instanceof LilBall) {
+            ((LilBall) ball1).crash(ball2);
         }
     }
 
 
     @Override
-    public void update(Enum topic, Object object) {
+    public void update(Enum topic, Gluable object) {
 
-        switch ((GameObjectType)topic) {
-            case BIGBALL:
-                view.createNewGameObject();
-                break;
-            case LILBALL:
-                view.createNewGameObject();
-                break;
-            default:
-                //whatever
+        if (topic instanceof GameObjectType) {
 
+            switch ((GameObjectType) topic) {
+                case BIGBALL:
+                    newGameObject(object);
+                    break;
+                case LILBALL:
+                    newGameObject(object);
+                    break;
+                default:
+                    //whatever
+
+            }
+        } else if (topic instanceof LilBallTopic && object instanceof LilBall) {
+            switch ((LilBallTopic) topic) {
+                case START:
+                    view.startMoving((LilBall) object);
+                    break;
+                case STOPPED:
+                    break;
+                case EXPLODE:
+                    break;
+                case BOUNCE:
+                    break;
+            }
         }
+
     }
+
 }

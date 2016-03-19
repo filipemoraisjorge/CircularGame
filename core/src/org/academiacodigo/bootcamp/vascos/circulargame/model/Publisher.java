@@ -6,6 +6,7 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
 public interface Publisher {
 
     void registerSubscriber(Subscriber subscriber);
-    void publish(Enum topic);
+
+    void publish(Enum topic, Object obj);
 
 }
