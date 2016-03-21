@@ -1,15 +1,19 @@
 package org.academiacodigo.bootcamp.vascos.circulargame.view;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.WeldJoint;
 import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
+import com.badlogic.gdx.utils.TimeUtils;
+import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpCmds;
 import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpConnection;
 import org.academiacodigo.bootcamp.vascos.circulargame.controller.Controller;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
@@ -34,6 +38,7 @@ public class View implements ApplicationListener {
     private final float BIGBALL_MAX_VELOCITY = 1;
     private final int LILBALL_MAX_VELOCITY = 10;
 
+
     private Controller controller;
 
     private TcpConnection connection;
@@ -53,8 +58,9 @@ public class View implements ApplicationListener {
     private BitmapFont font22;
 
 
+    private long playerTimeToControl = 500;
+    private long lastPlayerTime;
     private boolean playerTurn;
-    private int playerscore;
 
     private Screen screen;
 
@@ -85,6 +91,13 @@ public class View implements ApplicationListener {
     }
 
     /**
+     * @return the currently active {@link Screen}.
+     */
+    public Screen getScreen() {
+        return screen;
+    }
+
+    /**
      * Sets the current screen. {@link Screen#hide()} is called on any old screen, and {@link Screen#show()} is called on the new
      * screen, if any.
      *
@@ -99,31 +112,24 @@ public class View implements ApplicationListener {
         }
     }
 
-    /**
-     * @return the currently active {@link Screen}.
-     */
-    public Screen getScreen() {
-        return screen;
-    }
-
     @Override
     public void create() {
         //Create Connection between two players
-        //connection = new TcpConnection(55555);
+        connection = new TcpConnection(55555);
 
         //Create Fonts
-    /*    FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = 22;
         font22 = generator.generateFont(parameter);
-        generator.dispose();*/
+        generator.dispose();
 
         cameraBox2d = new OrthographicCamera();
         cameraBox2d.setToOrtho(false, WIDTH, HEIGHT);
 
-/*        camera = new OrthographicCamera();
-        camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);*/
-       /* batch = new SpriteBatch();*/
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);
+        batch = new SpriteBatch();
 
 
         Box2D.init();
@@ -135,15 +141,15 @@ public class View implements ApplicationListener {
         shapeRenderer = new ShapeRenderer();
 
         //START LISTENING FOR COMMANDS
- /*       Thread commandListener = new Thread(new TCPListener());
+        Thread commandListener = new Thread(new TCPListener());
         commandListener.setName("commandListener");
-        commandListener.start();*/
+        commandListener.start();
 
         //DECIDE WHO PLAYS FIRST
-        //decideWhoPlaysFirst();
+        decideWhoPlaysFirst();
 
 
-        playerTurn = true;
+        //playerTurn = true;
         //setPlayerTurn(true);
         balls = new HashMap<Gluable, BallView>();
         balls_temp = new HashMap<Gluable, BallView>();
@@ -152,17 +158,8 @@ public class View implements ApplicationListener {
             @Override
             public void beginContact(Contact contact) {
 
-/*
                 if (!(contact.getFixtureA().getBody().getType() == BodyDef.BodyType.StaticBody) &&
                         !(contact.getFixtureB().getBody().getType() == BodyDef.BodyType.StaticBody)) {
-                    Gluable ball1 = (Gluable) contact.getFixtureA().getBody().getUserData();
-                    Gluable ball2 = (Gluable) contact.getFixtureB().getBody().getUserData();
-                    System.out.println(contact.getFixtureA().getBody().getUserData().getClass().getCanonicalName() + " " +
-                            contact.getFixtureB().getBody().getUserData().getClass().getCanonicalName());
-                    controller.touched(ball1, ball2);
-                }*/
-                if ((contact.getFixtureA().getBody().getType() != BodyDef.BodyType.StaticBody) &&
-                        (contact.getFixtureB().getBody().getType() != BodyDef.BodyType.StaticBody)) {
 
                     ((BallView) contact.getFixtureA().getBody().getUserData()).startContact((BallView) contact.getFixtureB().getBody().getUserData());
                 }
@@ -185,6 +182,27 @@ public class View implements ApplicationListener {
         });
     }
 
+    private synchronized void decideWhoPlaysFirst() {
+
+        //the quickest to get where starts.
+        long myTime = sendTimeToOther();
+        long otherTime = 0;
+        while (otherTime == 0) {
+            otherTime = receiveTimeFromOther();
+        }
+        System.out.println("MINE  " + myTime);
+        System.out.println("OTHER " + otherTime);
+
+        if (myTime > otherTime) {
+            playerTurn = true;
+            TcpCmds.YOUR_TURN.send(connection, !playerTurn);
+        }
+        //If is it my turn, save currentTime
+        if (playerTurn) {
+            lastPlayerTime = TimeUtils.millis();
+        }
+    }
+
 
     @Override
     public void render() {
@@ -204,16 +222,15 @@ public class View implements ApplicationListener {
 
 
         //my turn info for debugging
-/*        batch.setProjectionMatrix(camera.combined);
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
         font22.setColor((playerTurn ? Color.GREEN : Color.RED));
         font22.draw(batch, "my turn", 50, 50);
-        batch.end();*/
+        batch.end();
 
         //draw lilBalls
 
         Collection<BallView> ballsCollection = balls.values();
-        //Iterator<BallView> it = ballsCollection.iterator();
         for (BallView ball : ballsCollection) {
 
             if (ball.getClass() == BigBallView.class) {
@@ -222,16 +239,15 @@ public class View implements ApplicationListener {
                 ((LilBallView) ball).render(shapeRenderer, controller);
             }
         }
-
         balls.putAll(balls_temp);
 
 
         controlMainCircle();
 
         //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
-        //checkPlayerTurn();
+        checkPlayerTurn();
 
-        //checkCollisions
+
 
 
     }
@@ -246,14 +262,14 @@ public class View implements ApplicationListener {
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -BIGBALL_MAX_VELOCITY) {
                 float newVel = vel - BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
             // apply right impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < BIGBALL_MAX_VELOCITY) {
                 float newVel = vel + BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                TcpCmds.MY_VELOCITY.send(connection, newVel);
             }
 
 /*
@@ -275,6 +291,7 @@ public class View implements ApplicationListener {
         }
     }
 
+
     public void createNewGameObject(Gluable ballObject) {
         if (mainCircle == null && ballObject instanceof BigBall) {
 
@@ -289,40 +306,7 @@ public class View implements ApplicationListener {
 
     private void createBigBall(BigBall bigBall) {
 
-/*        BodyDef groundBodyDef = new BodyDef();
-        groundBodyDef.type = BodyDef.BodyType.KinematicBody;
-        // Set its world position
-        groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
-        groundBodyDef.angularVelocity = 0;
 
-        // Create a body from the definition and add it to the world
-        mainCircle = world.createBody(groundBodyDef);
-        // save reference to modelGame's orginal object
-        mainCircle.setUserData(bigBall);
-
-        // Create a polygon shape
-        ChainShape groundBox = new ChainShape();
-
-        //Calculate the vertices of a circle.
-        double radius = bigBall.getRadius();
-        int numberOfSegments = 36;
-        Vector2[] vertices = new Vector2[numberOfSegments];
-
-        double angleSeg = 360 / numberOfSegments;
-        for (int i = 0; i < numberOfSegments; i++) {
-            double angle = Math.toRadians(angleSeg * i);
-            float x = (float) (radius * Math.cos(angle));
-            float y = (float) (radius * Math.sin(angle));
-            vertices[i] = new Vector2(x, y);
-        }
-        //in the end make a edge till center
-        //vertices[numberOfSegments] = new Vector2(0, 0);
-
-        groundBox.createLoop(vertices);
-        // Create a fixture from our polygon shape and add it to our ground body
-        mainCircle.createFixture(groundBox, 0.0f);
-        // Clean up after ourselves
-        groundBox.dispose();*/
         BigBallView ball = new BigBallView(world, bigBall, WIDTH, HEIGHT, PX_TO_METER);
         mainCircle = ball.getBody();
         balls.put(bigBall, ball);
@@ -330,39 +314,6 @@ public class View implements ApplicationListener {
     }
 
     private void createLilBall(LilBall lilBall) {
-/*        BodyDef lilBallBodyDef = new BodyDef();
-        // We set our lilBallBody to dynamic, for something like ground which doesn't move we would set it to StaticBody
-        lilBallBodyDef.type = BodyDef.BodyType.DynamicBody;
-        // Set our lilBallBody's starting position in the world
-        // varies with playerID
-        lilBallBodyDef.position.set(WIDTH / 2, (HEIGHT / 2) + (lilBall.getPlayerId() == 1 ? -2 : 2));
-        //lilBallBodyDef.position.set(WIDTH / 2, HEIGHT / 2);
-        // Create our lilBallBody in the world using our lilBallBody definition
-        Body lilBallBody = world.createBody(lilBallBodyDef);
-        // save reference to modelGame's orginal object
-        lilBallBody.setUserData(lilBall);
-        // Create a circle shape and set its radius to 6
-        CircleShape circle = new CircleShape();
-        circle.setRadius(lilBall.getRadius());
-
-
-        // Create a fixture definition to apply our shape to
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = circle;
-        fixtureDef.density = 0.1f;
-        fixtureDef.friction = 0.0f;
-        fixtureDef.restitution = 1.0f; // Make it bounce a little bit
-
-        // Create our fixture and attach it to the lilBallBody
-        Fixture fixture = lilBallBody.createFixture(fixtureDef);
-
-        // Remember to dispose of any shapes after you're done with them!
-        // BodyDef and FixtureDef don't need disposing, but shapes do.
-        circle.dispose();
-
-        lilBallBodyMap.put(lilBall, lilBallBody);
-        //has to be like a staticBody, it only stays dyanamic when startMoving is called
-        lilBallBody.setType(BodyDef.BodyType.StaticBody);*/
 
         LilBallView ball = new LilBallView(world, lilBall, WIDTH, HEIGHT, PX_TO_METER);
         balls_temp.put(lilBall, ball);
@@ -412,12 +363,79 @@ public class View implements ApplicationListener {
 
     }
 
-    public void increaseScore() {
-        if(playerTurn) {
+    /**
+     * Networking
+     *
+     * @return
+     */
+
+    private synchronized long sendTimeToOther() {
+        //send time to other
+        long myTime = TimeUtils.millis();
+        TcpCmds.MY_TIME.send(connection, myTime);
+        return myTime;
+
+    }
+
+    private synchronized long receiveTimeFromOther() {
+        //receive other time (will be stored lastPlayerTime)
+        return lastPlayerTime;
+    }
+
+    private synchronized void checkPlayerTurn() {
+        if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
+            playerTurn = false;
 
 
+            TcpCmds.YOUR_TURN.send(connection, true);
         }
     }
 
+
+    private class TCPListener implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                receiveCommand(connection);
+            }
+
+        }
+
+        private void receiveCommand(TcpConnection connection) {
+
+            String[] msg = connection.receive().split(" ");
+
+            TcpCmds thisCmds = TcpCmds.valueOf(msg[0]);
+            String value = msg[1];
+            switch (thisCmds) {
+                case YOUR_TURN:
+                    playerTurn = Boolean.parseBoolean(value);
+                    if (playerTurn) {
+                        lastPlayerTime = TimeUtils.millis();
+                    }
+                    break;
+                case MY_TIME:
+                    lastPlayerTime = Long.parseLong(value);
+                case MY_VELOCITY:
+                    float vel = mainCircle.getAngularVelocity();
+                    System.out.println("vel " + vel);
+                    if (vel <= -BIGBALL_MAX_VELOCITY) {
+                        vel = -BIGBALL_MAX_VELOCITY;
+                    }
+                    if (vel >= BIGBALL_MAX_VELOCITY) {
+                        vel = BIGBALL_MAX_VELOCITY;
+                    }
+
+                    float calcVelocity = vel + Float.parseFloat(value);
+                    mainCircle.setAngularVelocity(calcVelocity);
+                    break;
+
+                default:
+                    //nothing
+            }
+
+        }
+
+    }
 
 }
