@@ -264,8 +264,8 @@ public class View implements ApplicationListener {
         }
         balls.putAll(balls_temp);
 
-
         controlMainCircle();
+
         if (MULTIPLAYER_ON) {
             //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
             checkPlayerTurn();
@@ -371,15 +371,12 @@ public class View implements ApplicationListener {
 
         //find otherBall Body
         BallView otherBall = balls.get(lilBall.getAttachedBall());
-        System.out.println("view stop moving before otherball" + otherBall);
 
         if (otherBall == null) {
 
             otherBall = balls_temp.get(lilBall.getAttachedBall());
 
         }
-
-        System.out.println("view stop moving after otherball" + otherBall);
 
         Body otherBallBody = otherBall.getBody();
 
@@ -414,10 +411,9 @@ public class View implements ApplicationListener {
 
     private synchronized void checkPlayerTurn() {
         if (MULTIPLAYER_ON) {
-            //System.out.println(lastPlayerTime);
-            if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
-                playerTurn = false;
-
+            if (TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
+                playerTurn = !playerTurn;
+                lastPlayerTime = TimeUtils.millis();
                 if (NETWORK_ON) {
                     TcpCmds.YOUR_TURN.send(connection, true);
                 }
@@ -453,7 +449,6 @@ public class View implements ApplicationListener {
                     lastPlayerTime = Long.parseLong(value);
                 case MY_VELOCITY:
                     float vel = mainCircle.getAngularVelocity();
-                    System.out.println("vel " + vel);
                     if (vel <= -BIGBALL_MAX_VELOCITY) {
                         vel = -BIGBALL_MAX_VELOCITY;
                     }
