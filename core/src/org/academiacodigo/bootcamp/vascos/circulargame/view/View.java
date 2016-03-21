@@ -27,21 +27,18 @@ import java.util.*;
  * Created by JVasconcelos on 18/03/16
  */
 public class View implements ApplicationListener {
+
     private final float WIDTH_PX = 800;
     private final float HEIGHT_PX = 480;
-
     private final int PX_TO_METER = 10;
-
     private final float WIDTH = WIDTH_PX / PX_TO_METER;
     private final float HEIGHT = HEIGHT_PX / PX_TO_METER;
-
     private final float BIGBALL_MAX_VELOCITY = 1;
     private final int LILBALL_MAX_VELOCITY = 10;
-
-
+    private boolean NETWORK_ON;
+    private boolean MULTIPLAYER_ON;
     private Controller controller;
 
-    private TcpConnection connection;
 
     private OrthographicCamera cameraBox2d;
     private OrthographicCamera camera;
@@ -55,14 +52,22 @@ public class View implements ApplicationListener {
     private Map<Gluable, BallView> balls;
     private Map<Gluable, BallView> balls_temp;
 
+
+    private TcpConnection connection;
     private BitmapFont font22;
-
-
     private long playerTimeToControl = 500;
     private long lastPlayerTime;
+
+
     private boolean playerTurn;
 
     private Screen screen;
+
+
+    public View(boolean isNetworking, boolean isMultiplayer) {
+        this.NETWORK_ON = isNetworking;
+        this.MULTIPLAYER_ON = isMultiplayer;
+    }
 
     public void setController(Controller controller) {
         this.controller = controller;
@@ -112,44 +117,52 @@ public class View implements ApplicationListener {
         }
     }
 
+
     @Override
     public void create() {
-        //Create Connection between two players
-        connection = new TcpConnection(55555);
 
-        //Create Fonts
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 22;
-        font22 = generator.generateFont(parameter);
-        generator.dispose();
+        if (NETWORK_ON) {
+            //Create Connection between two players
+            connection = new TcpConnection(55555);
+        }
+
+        if(MULTIPLAYER_ON) {
+
+            //Create Fonts
+            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
+            FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            parameter.size = 22;
+            font22 = generator.generateFont(parameter);
+            generator.dispose();
+
+
+            camera = new OrthographicCamera();
+            camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);
+            batch = new SpriteBatch();
+        }
 
         cameraBox2d = new OrthographicCamera();
         cameraBox2d.setToOrtho(false, WIDTH, HEIGHT);
-
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);
-        batch = new SpriteBatch();
 
 
         Box2D.init();
 
         world = new World(new Vector2(0, 0), true);
 
-        debugRenderer = new Box2DDebugRenderer();
+        //debugRenderer = new Box2DDebugRenderer();
 
         shapeRenderer = new ShapeRenderer();
 
-        //START LISTENING FOR COMMANDS
-        Thread commandListener = new Thread(new TCPListener());
-        commandListener.setName("commandListener");
-        commandListener.start();
-
+        if (NETWORK_ON) {
+            //START LISTENING FOR COMMANDS
+            Thread commandListener = new Thread(new TCPListener());
+            commandListener.setName("commandListener");
+            commandListener.start();
+        }
         //DECIDE WHO PLAYS FIRST
         decideWhoPlaysFirst();
 
 
-        //playerTurn = true;
         //setPlayerTurn(true);
         balls = new HashMap<Gluable, BallView>();
         balls_temp = new HashMap<Gluable, BallView>();
@@ -184,18 +197,24 @@ public class View implements ApplicationListener {
 
     private synchronized void decideWhoPlaysFirst() {
 
-        //the quickest to get where starts.
-        long myTime = sendTimeToOther();
-        long otherTime = 0;
-        while (otherTime == 0) {
-            otherTime = receiveTimeFromOther();
-        }
-        System.out.println("MINE  " + myTime);
-        System.out.println("OTHER " + otherTime);
+        if (NETWORK_ON) {
+            //the quickest to get where starts.
+            long myTime = sendTimeToOther();
+            long otherTime = 0;
+            while (otherTime == 0) {
+                otherTime = receiveTimeFromOther();
+            }
+            System.out.println("MINE  " + myTime);
+            System.out.println("OTHER " + otherTime);
 
-        if (myTime > otherTime) {
+            if (myTime > otherTime) {
+                playerTurn = true;
+                TcpCmds.YOUR_TURN.send(connection, !playerTurn);
+            }
+        } else if (MULTIPLAYER_ON) {
+            playerTurn = (Math.random() > 0.5);
+        } else {
             playerTurn = true;
-            TcpCmds.YOUR_TURN.send(connection, !playerTurn);
         }
         //If is it my turn, save currentTime
         if (playerTurn) {
@@ -214,22 +233,26 @@ public class View implements ApplicationListener {
 
         //update cameras
         cameraBox2d.update();
-        //camera.update();
+        if (MULTIPLAYER_ON) {
+            camera.update();
+        }
 
         //render box2D world
-        debugRenderer.render(world, cameraBox2d.combined);
+        //debugRenderer.render(world, cameraBox2d.combined);
         world.step(1 / 60f, 6, 2);
 
+        if (MULTIPLAYER_ON) {
+            //my turn info for debugging
+            batch.setProjectionMatrix(camera.combined);
+            batch.begin();
+            font22.setColor((playerTurn ? Color.GREEN : Color.RED));
+            font22.draw(batch, "player1", 50, 50);
+            font22.setColor((!playerTurn ? Color.GREEN : Color.RED));
+            font22.draw(batch, "player2", 50, 25);
+            batch.end();
+        }
 
-        //my turn info for debugging
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        font22.setColor((playerTurn ? Color.GREEN : Color.RED));
-        font22.draw(batch, "my turn", 50, 50);
-        batch.end();
-
-        //draw lilBalls
-
+        //draw Balls
         Collection<BallView> ballsCollection = balls.values();
         for (BallView ball : ballsCollection) {
 
@@ -243,52 +266,58 @@ public class View implements ApplicationListener {
 
 
         controlMainCircle();
-
-        //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
-        checkPlayerTurn();
-
-
-
+        if (MULTIPLAYER_ON) {
+            //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
+            checkPlayerTurn();
+        }
 
     }
 
     private synchronized void controlMainCircle() {
+        float vel = mainCircle.getAngularVelocity();
+
+            //PLAYER1
         if (playerTurn) {
-
-            float vel = mainCircle.getAngularVelocity();
-
 
             // apply left impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && vel > -BIGBALL_MAX_VELOCITY) {
                 float newVel = vel - BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                TcpCmds.MY_VELOCITY.send(connection, newVel);
+                if (NETWORK_ON) {
+                    TcpCmds.MY_VELOCITY.send(connection, newVel);
+                }
             }
 
             // apply right impulse, but only if max velocity is not reached yet
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && vel < BIGBALL_MAX_VELOCITY) {
                 float newVel = vel + BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                TcpCmds.MY_VELOCITY.send(connection, newVel);
+                if (NETWORK_ON) {
+                    TcpCmds.MY_VELOCITY.send(connection, newVel);
+                }
             }
 
-/*
+            //PLAYER 2
+        } else if (MULTIPLAYER_ON) {
             // apply left impulse, but only if max velocity is not reached yet
-            if (Gdx.input.isKeyPressed(Input.Keys.A) && vel > -MAX_BIGBALL_VELOCITY) {
-                float newVel = vel - MAX_BIGBALL_VELOCITY / 10;
+            if (Gdx.input.isKeyPressed(Input.Keys.A) && vel > -BIGBALL_MAX_VELOCITY) {
+                float newVel = vel - BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                if (NETWORK_ON) {
+                    TcpCmds.MY_VELOCITY.send(connection, newVel);
+                }
             }
 
             // apply right impulse, but only if max velocity is not reached yet
-            if (Gdx.input.isKeyPressed(Input.Keys.D) && vel < MAX_BIGBALL_VELOCITY) {
-                float newVel = vel + MAX_BIGBALL_VELOCITY / 10;
+            if (Gdx.input.isKeyPressed(Input.Keys.D) && vel < BIGBALL_MAX_VELOCITY) {
+                float newVel = vel + BIGBALL_MAX_VELOCITY / 10;
                 mainCircle.setAngularVelocity(newVel);
-                //TcpCmds.MY_VELOCITY.send(connection, newVel);
+                if (NETWORK_ON) {
+                    TcpCmds.MY_VELOCITY.send(connection, newVel);
+                }
             }
-            */
-
         }
+
     }
 
 
@@ -305,7 +334,6 @@ public class View implements ApplicationListener {
 
 
     private void createBigBall(BigBall bigBall) {
-
 
         BigBallView ball = new BigBallView(world, bigBall, WIDTH, HEIGHT, PX_TO_METER);
         mainCircle = ball.getBody();
@@ -351,15 +379,13 @@ public class View implements ApplicationListener {
 
         Body otherBallBody = otherBall.getBody();
 
-
-        //do weld joint
+        //do weld joint, the glue!
         WeldJointDef weldJointDef = new WeldJointDef();
         weldJointDef.bodyA = lilBallBody;
         weldJointDef.bodyB = otherBallBody;
         weldJointDef.initialize(lilBallBody, otherBallBody, lilBallBody.getWorldCenter());
 
         world.createJoint(weldJointDef);
-
 
     }
 
@@ -383,12 +409,17 @@ public class View implements ApplicationListener {
     }
 
     private synchronized void checkPlayerTurn() {
-        if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
-            playerTurn = false;
+        if (MULTIPLAYER_ON) {
+            System.out.println(lastPlayerTime);
+            if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
+                playerTurn = false;
 
-
-            TcpCmds.YOUR_TURN.send(connection, true);
+                if (NETWORK_ON) {
+                    TcpCmds.YOUR_TURN.send(connection, true);
+                }
+            }
         }
+
     }
 
 
