@@ -2,8 +2,6 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
 
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.Launcher;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
 
 
 /**
@@ -18,8 +16,6 @@ public class ModelGame implements Publisher {
     private Player player1;
     private Player player2;
 
-    private Launcher launcher1;
-    private Launcher launcher2;
 
     public ModelGame(Subscriber controller) {
         registerSubscriber(controller);

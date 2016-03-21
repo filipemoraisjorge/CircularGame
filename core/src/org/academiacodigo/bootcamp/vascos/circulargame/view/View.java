@@ -54,6 +54,7 @@ public class View implements ApplicationListener {
 
 
     private boolean playerTurn;
+    private int playerscore;
 
     private Screen screen;
 
@@ -160,8 +161,8 @@ public class View implements ApplicationListener {
                             contact.getFixtureB().getBody().getUserData().getClass().getCanonicalName());
                     controller.touched(ball1, ball2);
                 }*/
-                if (!(contact.getFixtureA().getBody().getType() == BodyDef.BodyType.StaticBody) &&
-                        !(contact.getFixtureB().getBody().getType() == BodyDef.BodyType.StaticBody)) {
+                if ((contact.getFixtureA().getBody().getType() != BodyDef.BodyType.StaticBody) &&
+                        (contact.getFixtureB().getBody().getType() != BodyDef.BodyType.StaticBody)) {
 
                     ((BallView) contact.getFixtureA().getBody().getUserData()).startContact((BallView) contact.getFixtureB().getBody().getUserData());
                 }
@@ -221,6 +222,7 @@ public class View implements ApplicationListener {
                 ((LilBallView) ball).render(shapeRenderer, controller);
             }
         }
+
         balls.putAll(balls_temp);
 
 
@@ -408,6 +410,13 @@ public class View implements ApplicationListener {
         world.createJoint(weldJointDef);
 
 
+    }
+
+    public void increaseScore() {
+        if(playerTurn) {
+
+
+        }
     }
 
 
