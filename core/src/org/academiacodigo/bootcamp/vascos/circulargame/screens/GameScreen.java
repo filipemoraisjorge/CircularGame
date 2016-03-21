@@ -17,7 +17,6 @@ public class GameScreen extends AbstractGameScreen {
 
     private Controller controller;
     private View view;
-    private final boolean MULTIPLAYER = true;
 
     public GameScreen(Game game) {
         super(game);
@@ -29,11 +28,14 @@ public class GameScreen extends AbstractGameScreen {
         // initialize the asset manager
         //AssetManager.instance.init();
 
+    final boolean NETWORK = false;
+    final boolean MULTIPLAYER = true;
+
         // Initialize controller and view
         controller = new Controller();
         ModelGame game = new ModelGame(controller);
 
-        view = new View();
+        view = new View(NETWORK, MULTIPLAYER);
         view.setController(controller);
         controller.setModelGame(game);
         controller.setView(view);
