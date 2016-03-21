@@ -344,9 +344,12 @@ public class View implements ApplicationListener {
         //find otherBall Body
         BallView otherBall = balls.get(lilBall.getAttachedBall());
         System.out.println(otherBall);
+
         if (otherBall == null) {
+
             otherBall = balls_temp.get(lilBall.getAttachedBall());
         }
+
         System.out.println(otherBall);
 
         Body otherBallBody = otherBall.getBody();

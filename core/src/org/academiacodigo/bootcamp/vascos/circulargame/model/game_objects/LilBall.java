@@ -105,6 +105,7 @@ public class LilBall implements Gluable, Publisher {
 
             if (this.type.equals(otherLilBall.type)) {
 
+
                 //this ball is attached to other lil ball
                 attachedBall = otherLilBall;
            /* if (otherLilBall.attached) {
