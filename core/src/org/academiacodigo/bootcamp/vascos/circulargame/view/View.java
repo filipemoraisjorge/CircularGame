@@ -371,14 +371,15 @@ public class View implements ApplicationListener {
 
         //find otherBall Body
         BallView otherBall = balls.get(lilBall.getAttachedBall());
-        System.out.println(otherBall);
+        System.out.println("view stop moving before otherball" + otherBall);
 
         if (otherBall == null) {
 
             otherBall = balls_temp.get(lilBall.getAttachedBall());
+
         }
 
-        System.out.println(otherBall);
+        System.out.println("view stop moving after otherball" + otherBall);
 
         Body otherBallBody = otherBall.getBody();
 
@@ -413,7 +414,7 @@ public class View implements ApplicationListener {
 
     private synchronized void checkPlayerTurn() {
         if (MULTIPLAYER_ON) {
-            System.out.println(lastPlayerTime);
+            //System.out.println(lastPlayerTime);
             if (playerTurn && TimeUtils.timeSinceMillis(lastPlayerTime) >= playerTimeToControl) {
                 playerTurn = false;
 

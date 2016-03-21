@@ -85,7 +85,7 @@ public class LilBall implements Gluable, Publisher {
         //glue to same type balls or to bigBall walls
         //notify observers of change (stopped)
         if (!this.stopped) {
-            System.out.println("lilball Glue " + this);
+            //System.out.println("lilball Glue " + this);
             this.stopped = true;
             publish(LilBallTopic.STOPPED, this);
         }
@@ -104,10 +104,14 @@ public class LilBall implements Gluable, Publisher {
             LilBall otherLilBall = ((LilBall) otherBall);
 
             if (this.type.equals(otherLilBall.type)) {
-
+                System.out.println("GLUED TO LILBALL");
 
                 //this ball is attached to other lil ball
                 attachedBall = otherLilBall;
+                otherLilBall.attachedBall = this;
+                System.out.println("this    : " + this);
+                System.out.println("attached: " + attachedBall);
+
            /* if (otherLilBall.attached) {
                 explode();
                 return;
@@ -116,7 +120,11 @@ public class LilBall implements Gluable, Publisher {
                 this.attached = true;
                 otherLilBall.attached = true;
                 this.glue();
-                otherBall.glue();
+                System.out.println("colei o this");
+
+                otherLilBall.glue();
+                System.out.println("colei o other");
+
             }
 
         }
