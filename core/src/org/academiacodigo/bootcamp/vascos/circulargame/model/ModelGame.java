@@ -26,6 +26,10 @@ public class ModelGame implements Publisher {
 
     }
 
+    public BigBall getBigBall() {
+        return bigBall;
+    }
+
     public void init(boolean multiPlayer) {
         //initialize bigBall and players (and launchers)
 
@@ -54,6 +58,23 @@ public class ModelGame implements Publisher {
         //start game
     }
 
+    public void launchBall(int playerId) {
+        switch (playerId) {
+            case 1:
+                //bigBall.put(player1.getNextBall());
+                player1.launchBall();
+                break;
+            case 2:
+                //bigBall.put(player2.getNextBall());
+                player2.launchBall();
+                break;
+            default:
+                //nothing;
+
+        }
+
+
+    }
 
     @Override
     public void registerSubscriber(Subscriber subscriber) {

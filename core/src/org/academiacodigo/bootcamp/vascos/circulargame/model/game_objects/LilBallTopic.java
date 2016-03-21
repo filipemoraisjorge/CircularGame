@@ -7,7 +7,7 @@ public enum LilBallTopic {
     START,
     TOUCHED,
     STOPPED,
-    EXPLODE,
-    BOUNCE,
+    EXPLODE
+
 
 }

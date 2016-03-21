@@ -13,8 +13,8 @@ public class LilBallFactory {
         int random = RandomGenerator.generateRandomly(2);
         LilBall lilBall = new LilBall();
 
-        switch (random) {
 
+        switch (random) {
             case 0:
                 lilBall.setType(LilBallType.A);
                 break;

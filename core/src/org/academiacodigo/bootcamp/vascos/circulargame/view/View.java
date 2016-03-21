@@ -5,15 +5,19 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.physics.box2d.joints.WeldJoint;
+import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
 import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpConnection;
+import org.academiacodigo.bootcamp.vascos.circulargame.controller.Controller;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
+import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by JVasconcelos on 18/03/16
@@ -21,22 +25,30 @@ import java.util.Map;
 public class View implements ApplicationListener {
     private final float WIDTH_PX = 800;
     private final float HEIGHT_PX = 480;
-    private final float WIDTH = WIDTH_PX / 10;
-    private final float HEIGHT = HEIGHT_PX / 10;
+
+    private final int PX_TO_METER = 10;
+
+    private final float WIDTH = WIDTH_PX / PX_TO_METER;
+    private final float HEIGHT = HEIGHT_PX / PX_TO_METER;
 
     private final float BIGBALL_MAX_VELOCITY = 1;
     private final int LILBALL_MAX_VELOCITY = 10;
+
+    private Controller controller;
 
     private TcpConnection connection;
 
     private OrthographicCamera cameraBox2d;
     private OrthographicCamera camera;
     private SpriteBatch batch;
+    private ShapeRenderer shapeRenderer;
 
     private World world;
     private Box2DDebugRenderer debugRenderer;
     private Body mainCircle;
-    private Map<LilBall, Body> lilBallBodyMap;
+
+    private Map<Gluable, BallView> balls;
+    private Map<Gluable, BallView> balls_temp;
 
     private BitmapFont font22;
 
@@ -44,6 +56,11 @@ public class View implements ApplicationListener {
     private boolean playerTurn;
 
     private Screen screen;
+
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
+
 
     @Override
     public void dispose() {
@@ -107,12 +124,14 @@ public class View implements ApplicationListener {
         camera.setToOrtho(false, WIDTH_PX, HEIGHT_PX);*/
        /* batch = new SpriteBatch();*/
 
+
         Box2D.init();
 
         world = new World(new Vector2(0, 0), true);
 
         debugRenderer = new Box2DDebugRenderer();
 
+        shapeRenderer = new ShapeRenderer();
 
         //START LISTENING FOR COMMANDS
  /*       Thread commandListener = new Thread(new TCPListener());
@@ -125,7 +144,44 @@ public class View implements ApplicationListener {
 
         playerTurn = true;
         //setPlayerTurn(true);
-        lilBallBodyMap = new HashMap<LilBall, Body>();
+        balls = new HashMap<Gluable, BallView>();
+        balls_temp = new HashMap<Gluable, BallView>();
+        //set Collision detector
+        world.setContactListener(new ContactListener() {
+            @Override
+            public void beginContact(Contact contact) {
+
+/*
+                if (!(contact.getFixtureA().getBody().getType() == BodyDef.BodyType.StaticBody) &&
+                        !(contact.getFixtureB().getBody().getType() == BodyDef.BodyType.StaticBody)) {
+                    Gluable ball1 = (Gluable) contact.getFixtureA().getBody().getUserData();
+                    Gluable ball2 = (Gluable) contact.getFixtureB().getBody().getUserData();
+                    System.out.println(contact.getFixtureA().getBody().getUserData().getClass().getCanonicalName() + " " +
+                            contact.getFixtureB().getBody().getUserData().getClass().getCanonicalName());
+                    controller.touched(ball1, ball2);
+                }*/
+                if (!(contact.getFixtureA().getBody().getType() == BodyDef.BodyType.StaticBody) &&
+                        !(contact.getFixtureB().getBody().getType() == BodyDef.BodyType.StaticBody)) {
+
+                    ((BallView) contact.getFixtureA().getBody().getUserData()).startContact((BallView) contact.getFixtureB().getBody().getUserData());
+                }
+            }
+
+            @Override
+            public void endContact(Contact contact) {
+                ((BallView) contact.getFixtureA().getBody().getUserData()).endContact();
+            }
+
+            @Override
+            public void preSolve(Contact contact, Manifold oldManifold) {
+
+            }
+
+            @Override
+            public void postSolve(Contact contact, ContactImpulse impulse) {
+
+            }
+        });
     }
 
 
@@ -145,6 +201,7 @@ public class View implements ApplicationListener {
         debugRenderer.render(world, cameraBox2d.combined);
         world.step(1 / 60f, 6, 2);
 
+
         //my turn info for debugging
 /*        batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -152,10 +209,28 @@ public class View implements ApplicationListener {
         font22.draw(batch, "my turn", 50, 50);
         batch.end();*/
 
+        //draw lilBalls
+
+        Collection<BallView> ballsCollection = balls.values();
+        //Iterator<BallView> it = ballsCollection.iterator();
+        for (BallView ball : ballsCollection) {
+
+            if (ball.getClass() == BigBallView.class) {
+                ((BigBallView) ball).render(shapeRenderer, controller);
+            } else {
+                ((LilBallView) ball).render(shapeRenderer, controller);
+            }
+        }
+        balls.putAll(balls_temp);
+
+
         controlMainCircle();
 
         //CHECK WHO'S TURN IS IT AND SET IT AND SEND IT
         //checkPlayerTurn();
+
+        //checkCollisions
+
 
     }
 
@@ -212,7 +287,7 @@ public class View implements ApplicationListener {
 
     private void createBigBall(BigBall bigBall) {
 
-        BodyDef groundBodyDef = new BodyDef();
+/*        BodyDef groundBodyDef = new BodyDef();
         groundBodyDef.type = BodyDef.BodyType.KinematicBody;
         // Set its world position
         groundBodyDef.position.set(new Vector2(WIDTH / 2, HEIGHT / 2));
@@ -220,7 +295,8 @@ public class View implements ApplicationListener {
 
         // Create a body from the definition and add it to the world
         mainCircle = world.createBody(groundBodyDef);
-        mainCircle.setUserData(bigBall.getId()); //save ID on userData
+        // save reference to modelGame's orginal object
+        mainCircle.setUserData(bigBall);
 
         // Create a polygon shape
         ChainShape groundBox = new ChainShape();
@@ -244,26 +320,27 @@ public class View implements ApplicationListener {
         // Create a fixture from our polygon shape and add it to our ground body
         mainCircle.createFixture(groundBox, 0.0f);
         // Clean up after ourselves
-        groundBox.dispose();
-
+        groundBox.dispose();*/
+        BigBallView ball = new BigBallView(world, bigBall, WIDTH, HEIGHT, PX_TO_METER);
+        mainCircle = ball.getBody();
+        balls.put(bigBall, ball);
 
     }
 
     private void createLilBall(LilBall lilBall) {
-        BodyDef lilBallBodyDef = new BodyDef();
+/*        BodyDef lilBallBodyDef = new BodyDef();
         // We set our lilBallBody to dynamic, for something like ground which doesn't move we would set it to StaticBody
         lilBallBodyDef.type = BodyDef.BodyType.DynamicBody;
         // Set our lilBallBody's starting position in the world
         // varies with playerID
-        System.out.println(((lilBall.getPlayerId() == 1 ? -1 : 1)));
-        lilBallBodyDef.position.set(WIDTH / 2, (HEIGHT / 2) + (lilBall.getPlayerId() == 1 ? -1 : 1));
+        lilBallBodyDef.position.set(WIDTH / 2, (HEIGHT / 2) + (lilBall.getPlayerId() == 1 ? -2 : 2));
         //lilBallBodyDef.position.set(WIDTH / 2, HEIGHT / 2);
         // Create our lilBallBody in the world using our lilBallBody definition
         Body lilBallBody = world.createBody(lilBallBodyDef);
-
+        // save reference to modelGame's orginal object
+        lilBallBody.setUserData(lilBall);
         // Create a circle shape and set its radius to 6
         CircleShape circle = new CircleShape();
-        System.out.println(lilBall.getRadius());
         circle.setRadius(lilBall.getRadius());
 
 
@@ -280,16 +357,55 @@ public class View implements ApplicationListener {
         // Remember to dispose of any shapes after you're done with them!
         // BodyDef and FixtureDef don't need disposing, but shapes do.
         circle.dispose();
+
         lilBallBodyMap.put(lilBall, lilBallBody);
-        lilBallBody.setType(BodyDef.BodyType.StaticBody);
-        //TODO: has to be like a staticBody, it only stays dyanamic when startMoving is called
+        //has to be like a staticBody, it only stays dyanamic when startMoving is called
+        lilBallBody.setType(BodyDef.BodyType.StaticBody);*/
+
+        LilBallView ball = new LilBallView(world, lilBall, WIDTH, HEIGHT, PX_TO_METER);
+        balls_temp.put(lilBall, ball);
+
     }
 
     public void startMoving(LilBall lilBall) {
-        Body lilBallBody = lilBallBodyMap.get(lilBall);
+        BallView ball = balls.get(lilBall);
+        if (ball == null) {
+            ball = balls_temp.get(lilBall);
+        }
+
+        Body lilBallBody = ball.getBody();
         lilBallBody.setType(BodyDef.BodyType.DynamicBody);
         lilBallBody.setLinearVelocity(0, LILBALL_MAX_VELOCITY * (lilBall.getPlayerId() == 1 ? -1 : 1));
-        System.out.println(lilBallBodyMap.get(lilBall).getLinearVelocity());
+    }
+
+    public void stopMoving(LilBall lilBall) {
+
+
+        //find lilBall body
+        BallView ball = balls.get(lilBall);
+        if (ball == null) {
+            ball = balls_temp.get(lilBall);
+        }
+        Body lilBallBody = ball.getBody();
+
+        //find otherBall Body
+        BallView otherBall = balls.get(lilBall.getAttachedBall());
+        System.out.println(otherBall);
+        if (otherBall == null) {
+            otherBall = balls_temp.get(lilBall.getAttachedBall());
+        }
+        System.out.println(otherBall);
+
+        Body otherBallBody = otherBall.getBody();
+
+
+        //do weld joint
+        WeldJointDef weldJointDef = new WeldJointDef();
+        weldJointDef.bodyA = lilBallBody;
+        weldJointDef.bodyB = otherBallBody;
+        weldJointDef.initialize(lilBallBody, otherBallBody, lilBallBody.getWorldCenter());
+
+        world.createJoint(weldJointDef);
 
 
     }

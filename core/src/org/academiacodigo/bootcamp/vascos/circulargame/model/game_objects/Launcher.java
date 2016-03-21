@@ -25,6 +25,7 @@ public class Launcher {
         LilBall lilBall = LilBallFactory.getNewLilBall(playerId);
         //warn model so it can warn controller
         modelGame.publish(GameObjectType.LILBALL, lilBall);
+        lilBall.registerSubscriber(modelGame.getBigBall());
         return lilBall;
     }
 

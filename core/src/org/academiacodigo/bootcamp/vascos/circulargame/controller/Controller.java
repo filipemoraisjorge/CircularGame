@@ -47,7 +47,7 @@ public class Controller implements Subscriber<Gluable> {
 
     }
 
-    public void update(float deltaTime) {
+    public void updateGameObjects(float deltaTime) {
         //update all game objects
 
 
@@ -55,10 +55,7 @@ public class Controller implements Subscriber<Gluable> {
 
 
     public void touched(Gluable ball1, Gluable ball2) {
-
-        if (ball1 instanceof LilBall) {
-            ((LilBall) ball1).crash(ball2);
-        }
+        ball1.touched(ball2);
     }
 
 
@@ -79,16 +76,18 @@ public class Controller implements Subscriber<Gluable> {
 
             }
         } else if (topic instanceof LilBallTopic && object instanceof LilBall) {
+            LilBall lilBall = (LilBall) object;
             switch ((LilBallTopic) topic) {
                 case START:
-                    view.startMoving((LilBall) object);
+                    view.startMoving(lilBall);
                     break;
                 case STOPPED:
+                    view.stopMoving(lilBall);
+                    modelGame.launchBall(lilBall.getPlayerId()); //next ball
                     break;
                 case EXPLODE:
                     break;
-                case BOUNCE:
-                    break;
+
             }
         }
 

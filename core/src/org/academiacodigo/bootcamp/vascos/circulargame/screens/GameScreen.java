@@ -34,6 +34,7 @@ public class GameScreen extends AbstractGameScreen {
         ModelGame game = new ModelGame(controller);
 
         view = new View();
+        view.setController(controller);
         controller.setModelGame(game);
         controller.setView(view);
 
@@ -48,7 +49,7 @@ public class GameScreen extends AbstractGameScreen {
 
         // Update game world by the time that has passed
         // since last rendered frame.
-        controller.update(Gdx.graphics.getDeltaTime());
+        controller.updateGameObjects(Gdx.graphics.getDeltaTime());
 
         // Sets the clear screen color to: Black
         Gdx.gl.glClearColor(0, 0, 0, 1);
