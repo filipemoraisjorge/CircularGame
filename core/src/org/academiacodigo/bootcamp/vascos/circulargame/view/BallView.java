@@ -45,8 +45,7 @@ public class BallView {
     public void startContact(BallView otherBall) {
         touching++;
         this.collidedBall = otherBall;
-        System.out.println("this :" + this.ball);
-        System.out.println("collided ball :" + this.collidedBall.ball);
+
     }
 
     public void endContact() {

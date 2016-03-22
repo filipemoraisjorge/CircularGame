@@ -86,6 +86,7 @@ public class Controller implements Subscriber<Gluable> {
                     modelGame.launchBall(lilBall.getPlayerId()); //next ball
                     break;
                 case EXPLODE:
+                    view.removeLilBall(lilBall);
                     break;
 
             }

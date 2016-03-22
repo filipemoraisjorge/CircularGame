@@ -56,6 +56,7 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
         LilBall lilBall = (LilBall) otherBall;
         //if (!lilBall.isStopped()) {
         //lilBall.setStopped(true);
+
         lilBall.setAttachedBall(this);
         lilBall.glue();
         //}
@@ -75,11 +76,13 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
                 //stop balls, set position
                 break;
             case EXPLODE:
+                lilBallMap.remove(lilBall.getId());
+                modelGame.publish(LilBallTopic.EXPLODE, lilBall);
                 //erase ball representation and remove from ball list
                 break;
 
             default:
-                //never going to occur but whatevs
+                //never going to occur but whatever
         }
 
 

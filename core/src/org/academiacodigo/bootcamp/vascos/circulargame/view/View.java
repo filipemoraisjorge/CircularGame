@@ -51,6 +51,7 @@ public class View implements ApplicationListener {
 
     private Map<Gluable, BallView> balls;
     private Map<Gluable, BallView> balls_temp;
+    private List<BallView> ballsForRemoval;
 
 
     private TcpConnection connection;
@@ -126,7 +127,7 @@ public class View implements ApplicationListener {
             connection = new TcpConnection(55555);
         }
 
-        if(MULTIPLAYER_ON) {
+        if (MULTIPLAYER_ON) {
 
             //Create Fonts
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/montserrat/Montserrat-Hairline.otf"));
@@ -166,6 +167,8 @@ public class View implements ApplicationListener {
         //setPlayerTurn(true);
         balls = new HashMap<Gluable, BallView>();
         balls_temp = new HashMap<Gluable, BallView>();
+        ballsForRemoval = new ArrayList<BallView>();
+
         //set Collision detector
         world.setContactListener(new ContactListener() {
             @Override
@@ -192,6 +195,13 @@ public class View implements ApplicationListener {
             public void postSolve(Contact contact, ContactImpulse impulse) {
 
             }
+        });
+
+        //set Destruction Listener
+        world.setDestructionListener(new DestructionListener() {
+
+
+
         });
     }
 
@@ -271,12 +281,24 @@ public class View implements ApplicationListener {
             checkPlayerTurn();
         }
 
+        //remove Exploding balls
+        for (BallView ball : ballsForRemoval) {
+            LilBall lilBall = (LilBall) ball.getBall();
+            System.out.println("view.render() removed ball " + lilBall);
+            world.destroyBody(ball.getBody());
+            ballsForRemoval.remove(ball);
+            BallView ballRemoved = balls.remove(lilBall);
+            if ( ballRemoved == null) {
+                balls_temp.remove(lilBall);
+            }
+        }
+
     }
 
     private synchronized void controlMainCircle() {
         float vel = mainCircle.getAngularVelocity();
 
-            //PLAYER1
+        //PLAYER1
         if (playerTurn) {
 
             // apply left impulse, but only if max velocity is not reached yet
@@ -346,6 +368,15 @@ public class View implements ApplicationListener {
         LilBallView ball = new LilBallView(world, lilBall, WIDTH, HEIGHT, PX_TO_METER);
         balls_temp.put(lilBall, ball);
 
+    }
+
+    public void removeLilBall(LilBall lilBall) {
+        BallView ball = balls.get(lilBall);
+        if (ball == null) {
+            ball = balls_temp.get(lilBall);
+        }
+        ballsForRemoval.add(ball);
+        System.out.println("add for removalList " + ball);
     }
 
     public void startMoving(LilBall lilBall) {
