@@ -46,23 +46,19 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
 
 
     @Override
-    public void glue() {
-        //not implemented because it is not needed
+    public void glueTo(Gluable other) {
+
+        LilBall otherLilBall = (LilBall) other;
+        otherLilBall.glueTo(this);
     }
 
     @Override
     public void touched(Gluable otherBall) {
         //lil ball representation touches another ball's representation:
         LilBall lilBall = (LilBall) otherBall;
-        //if (!lilBall.isStopped()) {
-        //lilBall.setStopped(true);
-
-        lilBall.setAttachedBall(this);
-        lilBall.glue();
-        //}
-
-
+        this.glueTo(lilBall);
     }
+
 
     @Override
     public void update(Enum topic, LilBall lilBall) {
@@ -72,13 +68,13 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
                 modelGame.publish(LilBallTopic.START, lilBall);
                 break;
             case STOPPED:
-                modelGame.publish(LilBallTopic.STOPPED, lilBall);
                 //stop balls, set position
+                modelGame.publish(LilBallTopic.STOPPED, lilBall);
                 break;
             case EXPLODE:
+                //erase ball representation and remove from ball list
                 lilBallMap.remove(lilBall.getId());
                 modelGame.publish(LilBallTopic.EXPLODE, lilBall);
-                //erase ball representation and remove from ball list
                 break;
 
             default:

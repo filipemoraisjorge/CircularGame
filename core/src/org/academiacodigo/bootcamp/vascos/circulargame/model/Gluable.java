@@ -5,7 +5,7 @@ package org.academiacodigo.bootcamp.vascos.circulargame.model;
  */
 public interface Gluable {
 
-    void glue();
+    void glueTo(Gluable otherGluable);
 
     void touched(Gluable gluable);
 }

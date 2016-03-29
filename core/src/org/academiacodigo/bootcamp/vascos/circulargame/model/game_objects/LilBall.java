@@ -24,11 +24,12 @@ public class LilBall implements Gluable, Publisher {
 
     private boolean stopped = false;
     private boolean attached = false;
+
     //tem que passar a ser uma lista de gluables
     private Gluable attachedBall;
 
-    private List<LilBall> attachedBallList = new ArrayList<LilBall>();
-
+    private List<Gluable> attachedBallList = new ArrayList<Gluable>();
+    private int attachedCounter;
 
     public LilBallType getType() {
         return type;
@@ -70,6 +71,10 @@ public class LilBall implements Gluable, Publisher {
         this.attachedBall = attachedBall;
     }
 
+    public void setAttachedCounter(int attachedCounter) {
+        this.attachedCounter = attachedCounter;
+    }
+
     public boolean isStopped() {
         return stopped;
     }
@@ -78,7 +83,7 @@ public class LilBall implements Gluable, Publisher {
         this.stopped = stopped;
     }
 
-    public List<LilBall> getAttachedBallList() {
+    public List<Gluable> getAttachedBallList() {
         return attachedBallList;
     }
 
@@ -93,77 +98,87 @@ public class LilBall implements Gluable, Publisher {
 
 
     @Override
-    public void glue() {
+    public void glueTo(Gluable otherBall) {
 
-        //glue to same type balls or to bigBall walls
+        //glueTo to same type lilBalls or to bigBall walls
         //notify observers of change (stopped)
         if (!this.stopped) {
             this.stopped = true;
             //increment attachedBall counter
-            if (!attached) {
-                this.attached = true;
-                this.attachedBallList.add(this);
-            }
+            //if (!attached) {
+            this.attached = true;
+            this.attachedCounter++;
+            //this.attachedBallList.add(otherBall);
+            this.attachedBall = otherBall;
+            //}
             publish(LilBallTopic.STOPPED, this);
-            System.out.println("lilBall counter " + this + " " + attachedBallList.size());
+
+            //for debug
+            // System.out.println("lilBall glueTo. This " + this + " AttachedBall " + this.attachedBall + " this.counter " + this.attachedCounter);
+           /*
+            System.out.println("lilBall glueTo. This " + this + " list size " + attachedBallList.size() + ". list: ");
+            for (Gluable ball : this.attachedBallList) {
+                System.out.println(ball);
+            }
+            System.out.println();
+            */
+            //end debug
         }
     }
 
     @Override
     public void touched(Gluable otherBall) {
-
         //lil ball representation touches another ball's representation:
-        if (otherBall instanceof BigBall) {
-            attachedBall = otherBall;
-            glue();
+
+        //BigBall exception case
+   /*     if (otherBall instanceof BigBall && !this.attached) {
+            glueTo(otherBall);
             return;
-        }
+        }*/
+
 
         LilBall otherLilBall = (LilBall) otherBall;
+        //don't do this if this ball already is attached to otherBall
+        // && if both have the same type
 
-        if (otherLilBall.attachedBallList.size() >= 5) {
-            explode();
-            return;
-        }
-
-        if (!this.attachedBallList.contains(otherLilBall) &&
-                this.type.equals(otherLilBall.type)) {
+        if (this.type.equals(otherLilBall.type)) {
 
             //this ball is attached to other lil ball
-            attachedBall = otherLilBall;
-            otherLilBall.attachedBall = this;
+            //attachedBall = otherLilBall;
+            // otherLilBall.attachedBall = this;
 
-            System.out.println("lilBall touched otherball list size " + otherLilBall.attachedBallList.size());
+            //System.out.println("lilBall touched otherball list size " + otherLilBall.attachedBallList.size());
 
-
-            //glue should be glueTo(otherBall)?
-            this.glue();
-            otherLilBall.glue();
-
-            System.out.println("before other " + otherLilBall.attachedBallList.size());
-            System.out.println("before this  " + this.attachedBallList.size());
+            otherLilBall.attachedCounter += this.attachedCounter;
+            otherLilBall.glueTo(this);
+            //this.glueTo(otherLilBall);
 
             //join both lists, each ball keeps the same list
             //only if they aren't already in each other list
-            ArrayList<LilBall> tempList = new ArrayList<LilBall>();
-            tempList.addAll(otherLilBall.attachedBallList);
+/*                ArrayList<LilBall> tempList = new ArrayList<LilBall>();
+                tempList.addAll(otherLilBall.attachedBallList);
 
-            if (!otherLilBall.attachedBallList.contains(this)) {
-                otherLilBall.attachedBallList.addAll(this.attachedBallList);
+                if (!otherLilBall.attachedBallList.contains(this)) {
+                    otherLilBall.attachedBallList.addAll(this.attachedBallList);
+                }
+
+                if (!this.attachedBallList.contains(otherLilBall)) {
+                    this.attachedBallList.addAll(tempList);
+                }*/
+
+            //check if its time to explode
+            if (otherLilBall.attachedCounter >= 5) {
+                otherLilBall.attachedCounter = 0;
+                this.attachedCounter = 0;
+                this.explode();
+
             }
 
-            if (!this.attachedBallList.contains(otherLilBall)) {
-                this.attachedBallList.addAll(tempList);
-            }
+            /*
+                if (otherLilBall.attachedBallList.size() >= 5) {
+                    explode();
+                }*/
 
-            //for debug
-            System.out.println("after other " + otherLilBall.attachedBallList.size());
-            System.out.println("after this  " + this.attachedBallList.size());
-            for (LilBall ball : this.attachedBallList) {
-                System.out.println(ball);
-            }
-            System.out.println();
-            //end debug
 
         }
 
@@ -172,11 +187,17 @@ public class LilBall implements Gluable, Publisher {
 
     public void explode() {
         //if ball hits attached ball explode this ball
-        //explode hit ball and attached ball
+        //call explode method from attachedBall
+        if (attachedBall instanceof LilBall) {
+            ((LilBall) attachedBall).explode();
+        }
+
+        //explode this ball
         //notify big ball (observer) that I exploded
-        System.out.println("lilBall explode " + this);
-        //((LilBall) attachedBall).explode();
-        //publish(LilBallTopic.EXPLODE, this);
+        this.attached = false;
+        this.attachedBall = null;
+        this.stopped = false;
+        publish(LilBallTopic.EXPLODE, this);
     }
 
     @Override

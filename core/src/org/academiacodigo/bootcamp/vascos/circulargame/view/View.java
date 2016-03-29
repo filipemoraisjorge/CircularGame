@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.physics.box2d.joints.WeldJoint;
 import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
 import com.badlogic.gdx.utils.TimeUtils;
 import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpCmds;
@@ -18,7 +17,6 @@ import org.academiacodigo.bootcamp.vascos.circulargame.Network.TcpConnection;
 import org.academiacodigo.bootcamp.vascos.circulargame.controller.Controller;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.Gluable;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.BigBall;
-import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.GameObjectType;
 import org.academiacodigo.bootcamp.vascos.circulargame.model.game_objects.LilBall;
 
 import java.util.*;
@@ -34,7 +32,7 @@ public class View implements ApplicationListener {
     private final float WIDTH = WIDTH_PX / PX_TO_METER;
     private final float HEIGHT = HEIGHT_PX / PX_TO_METER;
     private final float BIGBALL_MAX_VELOCITY = 1;
-    private final int LILBALL_MAX_VELOCITY = 10;
+    private final int LILBALL_MAX_VELOCITY = 50;
     private boolean NETWORK_ON;
     private boolean MULTIPLAYER_ON;
     private Controller controller;
@@ -56,6 +54,7 @@ public class View implements ApplicationListener {
 
     private TcpConnection connection;
     private BitmapFont font22;
+    private BitmapFont font12;
     private long playerTimeToControl = 500;
     private long lastPlayerTime;
 
@@ -134,6 +133,10 @@ public class View implements ApplicationListener {
             FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
             parameter.size = 22;
             font22 = generator.generateFont(parameter);
+            parameter.size = 12;
+            parameter.borderColor = Color.BLACK;
+            parameter.borderWidth = 1;
+            font12 = generator.generateFont(parameter);
             generator.dispose();
 
 
@@ -173,7 +176,7 @@ public class View implements ApplicationListener {
         world.setContactListener(new ContactListener() {
             @Override
             public void beginContact(Contact contact) {
-
+                //if they are not the Launchers
                 if (!(contact.getFixtureA().getBody().getType() == BodyDef.BodyType.StaticBody) &&
                         !(contact.getFixtureB().getBody().getType() == BodyDef.BodyType.StaticBody)) {
 
@@ -263,6 +266,10 @@ public class View implements ApplicationListener {
         }
 
         //draw Balls
+
+
+        balls.putAll(balls_temp);
+
         Collection<BallView> ballsCollection = balls.values();
         for (BallView ball : ballsCollection) {
 
@@ -270,9 +277,25 @@ public class View implements ApplicationListener {
                 ((BigBallView) ball).render(shapeRenderer, controller);
             } else {
                 ((LilBallView) ball).render(shapeRenderer, controller);
+                batch.setProjectionMatrix(camera.combined);
+                batch.begin();
+                font12.setColor(Color.BLACK);
+                font12.draw(batch, ((LilBall) ball.getBall()).getId() + "", ball.getBody().getWorldCenter().x * PX_TO_METER - 5, ball.getBody().getWorldCenter().y * PX_TO_METER + 5);
+                batch.end();
             }
         }
-        balls.putAll(balls_temp);
+
+        //remove Exploding balls
+        if (ballsForRemoval.size() > 0) {
+            for (BallView ball : ballsForRemoval) {
+                LilBall lilBall = (LilBall) ball.getBall();
+                //System.out.println("view.render() removed ball " + lilBall + " " + ball.getBody());
+                world.destroyBody(ball.getBody());
+                balls.remove(lilBall);
+            }
+            ballsForRemoval.clear();
+        }
+
 
         controlMainCircle();
 
@@ -281,17 +304,6 @@ public class View implements ApplicationListener {
             checkPlayerTurn();
         }
 
-        //remove Exploding balls
-        for (BallView ball : ballsForRemoval) {
-            LilBall lilBall = (LilBall) ball.getBall();
-            System.out.println("view.render() removed ball " + lilBall);
-            world.destroyBody(ball.getBody());
-            ballsForRemoval.remove(ball);
-            BallView ballRemoved = balls.remove(lilBall);
-            if ( ballRemoved == null) {
-                balls_temp.remove(lilBall);
-            }
-        }
 
     }
 
@@ -376,7 +388,6 @@ public class View implements ApplicationListener {
             ball = balls_temp.get(lilBall);
         }
         ballsForRemoval.add(ball);
-        System.out.println("add for removalList " + ball);
     }
 
     public void startMoving(LilBall lilBall) {

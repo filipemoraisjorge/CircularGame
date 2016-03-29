@@ -49,13 +49,14 @@ public class BallView {
     }
 
     public void endContact() {
-        // touching--;
+        //touching--;
         //this.collidedBall = null;
     }
 
     public void render(Controller controller) {
         if (touching > 0 /*&& collidedBall != null*/) {
             //check what to do
+            touching = 0;
             controller.touched(this.ball, collidedBall.ball);
 
 
