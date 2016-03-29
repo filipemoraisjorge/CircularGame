@@ -32,7 +32,7 @@ public class View implements ApplicationListener {
     private final float WIDTH = WIDTH_PX / PX_TO_METER;
     private final float HEIGHT = HEIGHT_PX / PX_TO_METER;
     private final float BIGBALL_MAX_VELOCITY = 1;
-    private final int LILBALL_MAX_VELOCITY = 50;
+    private final int LILBALL_MAX_VELOCITY = 30;
     private boolean NETWORK_ON;
     private boolean MULTIPLAYER_ON;
     private Controller controller;
@@ -266,8 +266,6 @@ public class View implements ApplicationListener {
         }
 
         //draw Balls
-
-
         balls.putAll(balls_temp);
 
         Collection<BallView> ballsCollection = balls.values();
@@ -383,8 +381,12 @@ public class View implements ApplicationListener {
     }
 
     public void removeLilBall(LilBall lilBall) {
+        System.out.println("remove lilBall = " + lilBall);
+
+
         BallView ball = balls.get(lilBall);
         if (ball == null) {
+            System.out.println("nao encontrou no balls, vai ao balls_temp");
             ball = balls_temp.get(lilBall);
         }
         ballsForRemoval.add(ball);

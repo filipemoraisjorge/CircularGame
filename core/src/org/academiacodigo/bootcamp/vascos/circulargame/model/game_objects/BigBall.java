@@ -76,12 +76,9 @@ public class BigBall implements Gluable, Subscriber<LilBall> {
                 lilBallMap.remove(lilBall.getId());
                 modelGame.publish(LilBallTopic.EXPLODE, lilBall);
                 break;
-
             default:
                 //never going to occur but whatever
         }
-
-
     }
 
     @Override

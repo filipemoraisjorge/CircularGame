@@ -93,6 +93,7 @@ public class LilBall implements Gluable, Publisher {
 
     public void startMoving() {
         //warn Controller to start this lilBall moving.
+
         publish(LilBallTopic.START, this);
     }
 
@@ -143,13 +144,6 @@ public class LilBall implements Gluable, Publisher {
 
         if (this.type.equals(otherLilBall.type)) {
 
-            //this ball is attached to other lil ball
-            //attachedBall = otherLilBall;
-            // otherLilBall.attachedBall = this;
-
-            //System.out.println("lilBall touched otherball list size " + otherLilBall.attachedBallList.size());
-
-
             //join both lists, each ball keeps the same list
             //only if they aren't already in each other list
             ArrayList<Gluable> tempList = new ArrayList<Gluable>();
@@ -170,8 +164,9 @@ public class LilBall implements Gluable, Publisher {
             //check if its time to explode
             System.out.println("LilBall touched. BallList size " + this.attachedBallList.size());
             System.out.println("LilBall touched. OtherBallList size " + otherLilBall.attachedBallList.size());
-            if (this.attachedBallList.size() >= 5) {
-
+            if (this.attachedBallList.size() >= 5 || otherLilBall.attachedBallList.size() >= 5) {
+                this.explode();
+                otherLilBall.explode();
                 for (Gluable gluable : this.attachedBallList) {
                     if (gluable instanceof LilBall) {
                         ((LilBall) gluable).explode();
@@ -179,14 +174,7 @@ public class LilBall implements Gluable, Publisher {
                     }
                 }
 
-
             }
-
-            /*
-                if (otherLilBall.attachedBallList.size() >= 5) {
-                    explode();
-                }*/
-
 
         }
 
@@ -194,17 +182,11 @@ public class LilBall implements Gluable, Publisher {
 
 
     public void explode() {
-        //if ball hits attached ball explode this ball
-        //call explode method from attachedBall
-        // if (attachedBall instanceof LilBall) {
-        //     ((LilBall) attachedBall).explode();
-        // }
-
         //explode this ball
         //notify big ball (observer) that I exploded
-        this.attached = false;
-        this.attachedBall = null;
-        this.stopped = false;
+//        this.attached = false;
+        //      this.attachedBall = null;
+        //    this.stopped = false;
         publish(LilBallTopic.EXPLODE, this);
     }
 

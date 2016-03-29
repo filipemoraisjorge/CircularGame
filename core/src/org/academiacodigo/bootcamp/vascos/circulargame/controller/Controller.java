@@ -55,6 +55,7 @@ public class Controller implements Subscriber<Gluable> {
 
 
     public void touched(Gluable ball1, Gluable ball2) {
+        System.out.println("controller " + ball2 + " touched " + ball1 );
         ball1.touched(ball2);
     }
 

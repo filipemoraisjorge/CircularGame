@@ -11,6 +11,7 @@ public class LilBallFactory {
 
     public static LilBall getNewLilBall(int playerId) {
         int random = RandomGenerator.generateRandomly(2);
+        //int random = 0;
         LilBall lilBall = new LilBall();
 
 
